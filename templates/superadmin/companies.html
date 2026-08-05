@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Companies — Superadmin — WorkTrack</title>
+  <link rel="icon" href="/static/assets/apple-icon.jpeg">
+  <link rel="stylesheet" href="/static/css/variables.css">
+  <link rel="stylesheet" href="/static/css/reset.css">
+  <link rel="stylesheet" href="/static/css/base.css">
+  <link rel="stylesheet" href="/static/css/utilities.css">
+  <link rel="stylesheet" href="/static/css/superadmin.css">
+  <link rel="stylesheet" href="/static/css/responsive.css">
+</head>
+<body class="sa-body">
+  <div class="sa-shell">
+    <div id="sa-sidebar-mount"></div>
+
+    <main class="sa-main">
+      <div class="sa-page-header">
+        <div>
+          <a href="/superadmin/" class="sa-back-link">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg>
+            Dashboard
+          </a>
+          <h1 class="sa-page-title">Companies</h1>
+          <p class="sa-page-subtitle">Every company workspace on WorkTrack.</p>
+        </div>
+        <div class="sa-header-actions">
+          <button class="sa-btn sa-btn-outline" onclick="loadCompanies()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+            Refresh
+          </button>
+          <button class="sa-btn sa-btn-primary" onclick="saOpenModal('addCompanyModal')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add Company
+          </button>
+        </div>
+      </div>
+
+      <div class="sa-search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" id="searchInput" placeholder="Search companies by name...">
+      </div>
+
+      <div class="sa-panel">
+        <div class="sa-panel-header">
+          <span class="sa-panel-title">All Companies</span>
+          <span class="sa-count-pill" id="countPill">0 companies</span>
+        </div>
+        <div class="sa-table-wrap">
+          <table class="sa-table">
+            <thead>
+              <tr>
+                <th>Company</th>
+                <th>Owner</th>
+                <th>Employees</th>
+                <th>Admins</th>
+                <th>Work Entries</th>
+                <th>Tasks</th>
+                <th>Pending Invites</th>
+                <th>Created</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="companiesBody">
+              <tr class="sa-empty-row"><td colspan="9">Loading companies…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add Company Modal -->
+  <div id="addCompanyModal" class="sa-modal-backdrop" style="display:none;">
+    <div class="sa-modal">
+      <div class="sa-modal-header">
+        <div>
+          <div class="sa-modal-sub">New workspace</div>
+          <div class="sa-modal-title">Add Company</div>
+        </div>
+        <button class="sa-modal-close" onclick="saCloseModal('addCompanyModal')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <form id="addCompanyForm">
+        <div class="sa-modal-body">
+          <div class="sa-error-box" id="addCompanyError"></div>
+          <div class="sa-form-row">
+            <label>Company Name</label>
+            <input type="text" class="sa-input" id="newCompanyName" placeholder="e.g. Acme Technologies" required>
+          </div>
+          <p class="sa-hint">This only creates an empty company record. Add an owner admin from the company's detail page afterwards, or have them sign up normally and invite them as co-admin.</p>
+        </div>
+        <div class="sa-modal-footer">
+          <button type="button" class="sa-btn sa-btn-outline" onclick="saCloseModal('addCompanyModal')">Cancel</button>
+          <button type="submit" class="sa-btn sa-btn-primary">Create Company</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/static/js/config.js"></script>
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/superadmin.js"></script>
+  <script>
+    saRenderSidebar('companies');
+
+    let allCompanies = [];
+
+    function renderCompanies(list) {
+      const tbody = document.getElementById('companiesBody');
+      document.getElementById('countPill').textContent = `${list.length} compan${list.length === 1 ? 'y' : 'ies'}`;
+
+      if (!list.length) {
+        tbody.innerHTML = `<tr class="sa-empty-row"><td colspan="9">No companies found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = list.map((c) => `
+        <tr class="sa-row-link" onclick="location.href='/superadmin/company-detail/?id=${c.id}'">
+          <td>
+            <div class="sa-name-cell">
+              <span class="sa-avatar">${saInitials(c.name)}</span>
+              <span>${saEscape(c.name)}</span>
+            </div>
+          </td>
+          <td>
+            ${c.owner_name !== '—' ? saEscape(c.owner_name) : '<span class="sa-subtext">—</span>'}
+            <div class="sa-subtext">${saEscape(c.owner_email || '')}</div>
+          </td>
+          <td>${c.employee_count}</td>
+          <td>${c.admin_count}</td>
+          <td>${c.work_entry_count}</td>
+          <td>${c.task_count}</td>
+          <td>${c.pending_invite_count}</td>
+          <td>${saDate(c.created_at)}</td>
+          <td>
+            <span class="sa-badge ${c.is_active ? 'sa-badge-green' : 'sa-badge-red'}">
+              <span class="sa-badge-dot"></span>${c.is_active ? 'Active' : 'Inactive'}
+            </span>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function loadCompanies() {
+      document.getElementById('companiesBody').innerHTML = `<tr class="sa-empty-row"><td colspan="9">Loading companies…</td></tr>`;
+      try {
+        allCompanies = await saGet(API_CONFIG.ENDPOINTS.SUPERADMIN_COMPANIES);
+        renderCompanies(allCompanies);
+      } catch (e) {
+        saToast(e.message, 'error');
+        document.getElementById('companiesBody').innerHTML = `<tr class="sa-empty-row"><td colspan="9">Failed to load companies.</td></tr>`;
+      }
+    }
+
+    document.getElementById('searchInput').addEventListener('input', saDebounce((e) => {
+      const q = e.target.value.trim().toLowerCase();
+      renderCompanies(!q ? allCompanies : allCompanies.filter((c) => c.name.toLowerCase().includes(q)));
+    }, 200));
+
+    document.getElementById('addCompanyForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errBox = document.getElementById('addCompanyError');
+      errBox.classList.remove('show');
+      const name = document.getElementById('newCompanyName').value.trim();
+      if (!name) return;
+      try {
+        await saPost(API_CONFIG.ENDPOINTS.SUPERADMIN_COMPANY_CREATE, { name });
+        saCloseModal('addCompanyModal');
+        document.getElementById('newCompanyName').value = '';
+        saToast('Company created.', 'success');
+        loadCompanies();
+      } catch (err) {
+        errBox.textContent = err.message;
+        errBox.classList.add('show');
+      }
+    });
+
+    loadCompanies();
+  </script>
+</body>
+</html>

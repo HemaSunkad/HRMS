@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Superadmin Control Panel — WorkTrack</title>
+  <link rel="icon" href="/static/assets/apple-icon.jpeg">
+  <link rel="stylesheet" href="/static/css/variables.css">
+  <link rel="stylesheet" href="/static/css/reset.css">
+  <link rel="stylesheet" href="/static/css/base.css">
+  <link rel="stylesheet" href="/static/css/utilities.css">
+  <link rel="stylesheet" href="/static/css/superadmin.css">
+  <link rel="stylesheet" href="/static/css/responsive.css">
+</head>
+<body class="sa-body">
+  <div class="sa-shell">
+    <div id="sa-sidebar-mount"></div>
+
+    <main class="sa-main">
+      <div class="sa-page-header">
+        <div>
+          <h1 class="sa-page-title">Superadmin Control Panel</h1>
+          <p class="sa-page-subtitle">Every company, every table — one place. Full read / write access to the database.</p>
+        </div>
+      </div>
+
+      <div class="sa-stat-grid">
+        <div class="sa-stat-card">
+          <div class="sa-stat-icon" style="background:#ede9fe;color:#7c3aed;">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="9" y1="2" x2="9" y2="22"></line></svg>
+          </div>
+          <p class="sa-stat-value" id="statCompanies">—</p>
+          <p class="sa-stat-label">Companies</p>
+        </div>
+        <div class="sa-stat-card">
+          <div class="sa-stat-icon" style="background:#cffafe;color:#0e7490;">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+          </div>
+          <p class="sa-stat-value" id="statPeople">—</p>
+          <p class="sa-stat-label">Employees + Admins</p>
+        </div>
+        <div class="sa-stat-card">
+          <div class="sa-stat-icon" style="background:#d1fae5;color:#047857;">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+          </div>
+          <p class="sa-stat-value" id="statEntries">—</p>
+          <p class="sa-stat-label">Work Entries</p>
+        </div>
+        <div class="sa-stat-card">
+          <div class="sa-stat-icon" style="background:#fee2e2;color:#be123c;">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+          </div>
+          <p class="sa-stat-value" id="statInvites">—</p>
+          <p class="sa-stat-label">Pending Invites</p>
+        </div>
+      </div>
+
+      <h2 style="font-size:1.05rem;font-weight:800;margin-bottom:0.9rem;">Database Tables</h2>
+      <div class="sa-tile-grid">
+        <a href="/superadmin/companies/" class="sa-tile">
+          <div class="sa-tile-icon" style="background:linear-gradient(135deg,#8b5cf6,#d946ef);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="9" y1="2" x2="9" y2="22"></line></svg>
+          </div>
+          <span class="sa-tile-count" id="tileCompanies">—</span>
+          <h3>Companies</h3>
+          <p>All company workspaces</p>
+        </a>
+        <a href="/superadmin/employees/" class="sa-tile">
+          <div class="sa-tile-icon" style="background:linear-gradient(135deg,#06b6d4,#3b82f6);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+          </div>
+          <span class="sa-tile-count" id="tileEmployees">—</span>
+          <h3>Employee Profiles</h3>
+          <p>Every person, across every company</p>
+        </a>
+        <a href="/superadmin/work-entries/" class="sa-tile">
+          <div class="sa-tile-icon" style="background:linear-gradient(135deg,#10b981,#14b8a6);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+          </div>
+          <span class="sa-tile-count" id="tileEntries">—</span>
+          <h3>Work Entries</h3>
+          <p>Logged work across all companies</p>
+        </a>
+        <a href="/superadmin/tasks/" class="sa-tile">
+          <div class="sa-tile-icon" style="background:linear-gradient(135deg,#f59e0b,#f97316);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+          </div>
+          <span class="sa-tile-count" id="tileTasks">—</span>
+          <h3>Assigned Tasks</h3>
+          <p>Tasks handed out across all companies</p>
+        </a>
+        <a href="/superadmin/reports/" class="sa-tile">
+          <div class="sa-tile-icon" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path></svg>
+          </div>
+          <span class="sa-tile-count" id="tileReports">—</span>
+          <h3>Daily Reports</h3>
+          <p>Submitted end-of-day reports</p>
+        </a>
+        <a href="/superadmin/invites/" class="sa-tile">
+          <div class="sa-tile-icon" style="background:linear-gradient(135deg,#f43f5e,#ec4899);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+          </div>
+          <span class="sa-tile-count" id="tileInvites">—</span>
+          <h3>Admin Invites</h3>
+          <p>Pending & accepted co-admin invites</p>
+        </a>
+        <a href="/superadmin/users/" class="sa-tile">
+          <div class="sa-tile-icon" style="background:linear-gradient(135deg,#334155,#0f172a);">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="10" r="3"></circle><path d="M6.5 19a6 6 0 0 1 11 0"></path></svg>
+          </div>
+          <span class="sa-tile-count" id="tileUsers">—</span>
+          <h3>User Accounts</h3>
+          <p>Every raw login account (auth_user)</p>
+        </a>
+      </div>
+    </main>
+  </div>
+
+  <script src="/static/js/config.js"></script>
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/superadmin.js"></script>
+  <script>
+    saRenderSidebar('dashboard');
+
+    function setText(id, value) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = value;
+    }
+
+    async function loadStats() {
+      try {
+        const stats = await saGet(API_CONFIG.ENDPOINTS.SUPERADMIN_STATS);
+        setText('statCompanies', stats.companies);
+        setText('statPeople', stats.employees + stats.admins);
+        setText('statEntries', stats.work_entries);
+        setText('statInvites', stats.invites_pending);
+
+        setText('tileCompanies', stats.companies);
+        setText('tileEmployees', stats.employees + stats.admins);
+        setText('tileEntries', stats.work_entries);
+        setText('tileTasks', stats.tasks);
+        setText('tileReports', stats.daily_reports);
+        setText('tileInvites', stats.invites_total);
+      } catch (e) {
+        saToast(e.message, 'error');
+      }
+
+      try {
+        const users = await saGet(API_CONFIG.ENDPOINTS.SUPERADMIN_USERS);
+        setText('tileUsers', users.length);
+      } catch (e) { /* ignore */ }
+    }
+
+    loadStats();
+  </script>
+</body>
+</html>

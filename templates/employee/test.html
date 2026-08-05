@@ -1,0 +1,56 @@
+{% extends "employee/_base.html" %}
+
+{% block title %}Test Page - Employee{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="employee-header">
+  <div class="employee-header-bg"></div>
+  <div class="employee-header-content">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div class="flex items-center gap-4 flex-wrap">
+        <div>
+          <p class="text-[9px] font-bold uppercase tracking-widest text-white/60 leading-none mb-1" id="companyLabel">HAEGL · EMPLOYEE DASHBOARD</p>
+          <div class="flex items-center gap-2">
+            <span class="text-lg" id="greetingEmoji">☀️</span>
+            <h1 class="text-lg md:text-xl font-bold text-white leading-none" id="greetingText">Good afternoon, Employee!</h1>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-[11px] font-bold text-white bg-emerald-600/80 backdrop-blur-sm px-2.5 py-1 rounded-lg flex items-center gap-1.5" id="timeBadge">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span id="currentTime">12:00:00</span>
+          </span>
+          <span class="text-[11px] font-medium text-white/80 hidden md:inline" id="currentDate">Monday, January 1, 2024</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Test Content Card -->
+<div class="main-card">
+  <div class="p-8 text-center">
+    <div class="text-6xl mb-4">🎉</div>
+    <h2 class="text-2xl font-bold text-gray-800 mb-2">Base Template Test Successful!</h2>
+    <p class="text-gray-600 mb-4">The employee base template is working correctly.</p>
+    <div class="flex items-center justify-center gap-4 text-sm">
+      <div class="flex items-center gap-2">
+        <span class="w-3 h-3 rounded-full bg-green-500"></span>
+        <span>Auth Guard</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="w-3 h-3 rounded-full bg-green-500"></span>
+        <span>Sidebar</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="w-3 h-3 rounded-full bg-green-500"></span>
+        <span>Bubbles</span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendance - Employee - WorkTrack</title>
+  <link rel="icon" href="/static/assets/apple-icon.jpeg">
+  <link rel="stylesheet" href="/static/css/reset.css">
+  <link rel="stylesheet" href="/static/css/variables.css">
+  <link rel="stylesheet" href="/static/css/animations.css">
+  <link rel="stylesheet" href="/static/css/admin-worklog.css">
+  <link rel="stylesheet" href="/static/css/responsive.css">
+  <style>
+    .content-wrapper {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding: 1rem 1.25rem 2rem;
+      box-sizing: border-box;
+    }
+    @media (min-width: 1024px) {
+      .content-wrapper { padding: 1.25rem 1.75rem 2.5rem; }
+    }
+
+    .att-card {
+      background: white;
+      border-radius: 1.125rem;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.06);
+      overflow: hidden;
+    }
+    .att-card-header {
+      padding: 0.85rem 1.1rem;
+      border-bottom: 1px solid #f1f2f4;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .att-card-header-left { display: flex; align-items: center; gap: 0.5rem; }
+    .att-card-header h2 {
+      font-size: 0.875rem;
+      font-weight: 800;
+      color: #1e293b;
+      margin: 0;
+    }
+    .att-office-line {
+      font-size: 0.75rem;
+      color: #7c3aed;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      max-width: 60%;
+      text-align: right;
+    }
+    .att-card-body { padding: 0.9rem 1.1rem; }
+
+    /* Office hours policy banner — compact */
+    .att-policy-banner {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      flex-wrap: wrap;
+      background: linear-gradient(135deg, #f5f3ff, #faf5ff);
+      border: 1px solid #ede9fe;
+      border-radius: 0.85rem;
+      padding: 0.55rem 0.95rem;
+      font-size: 0.75rem;
+      color: #6d28d9;
+      font-weight: 700;
+    }
+    .att-policy-banner svg { flex-shrink: 0; color: #8b5cf6; width: 15px; height: 15px; }
+    .att-policy-sep { color: #c4b5fd; font-weight: 400; }
+
+    /* Compact "Today's Attendance" — takes less space */
+    .att-status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.65rem;
+    }
+    .att-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.3rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .att-status-pill.not-in { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
+    .att-status-pill.in { background: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0; }
+    .att-status-pill.out { background: #ede9fe; color: #7c3aed; border: 1px solid #ddd6fe; }
+
+    .att-time-big {
+      font-size: 1.375rem;
+      font-weight: 900;
+      color: #1e293b;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+    }
+    .att-date-sub { font-size: 0.75rem; color: #64748b; margin-top: 0.1rem; }
+
+    .att-punch-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
+      margin: 0.75rem 0 0;
+      max-width: 420px;
+    }
+    .att-punch-btn {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.6rem;
+      border-radius: 0.75rem;
+      border: none;
+      cursor: pointer;
+      font-weight: 800;
+      font-size: 0.8125rem;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .att-punch-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .att-punch-btn:not(:disabled):hover { transform: translateY(-2px); }
+    .att-punch-btn.checkin { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; box-shadow: 0 8px 16px -6px rgba(22,163,74,0.4); }
+    .att-punch-btn.checkout { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; box-shadow: 0 8px 16px -6px rgba(124,58,237,0.4); }
+    .att-punch-btn svg { width: 16px; height: 16px; }
+
+    .att-detail-list { display: flex; flex-direction: column; gap: 0.35rem; margin-top: 0.75rem; }
+    .att-detail-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+      color: #475569;
+    }
+    .att-detail-row svg { width: 14px; height: 14px; flex-shrink: 0; margin-top: 1px; color: #8b5cf6; }
+    .att-detail-label { font-weight: 700; color: #1e293b; margin-right: 0.2rem; }
+
+    .att-geo-hint {
+      font-size: 0.6875rem;
+      color: #94a3b8;
+      margin-top: 0.6rem;
+    }
+
+    .att-timing-badge, .att-daytype-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+      font-size: 0.6875rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .att-timing-badge.ontime { background: #dcfce7; color: #16a34a; }
+    .att-timing-badge.late { background: #fee2e2; color: #dc2626; }
+    .att-timing-badge.early { background: #fff7ed; color: #ea580c; }
+    .att-timing-badge.fullday { background: #dcfce7; color: #16a34a; }
+    .att-timing-badge.none { background: #f1f5f9; color: #94a3b8; }
+
+    .att-daytype-badge.weekday { background: #eff6ff; color: #2563eb; }
+    .att-daytype-badge.working-sat { background: #ecfeff; color: #0891b2; }
+    .att-daytype-badge.holiday { background: #fdf2f8; color: #db2777; }
+
+    /* History table — the primary content on the page now, own scroller */
+    .att-scroll-table { max-height: 64vh; overflow-y: auto; }
+    .att-scroll-table::-webkit-scrollbar { width: 8px; }
+    .att-scroll-table::-webkit-scrollbar-thumb { background: #ddd6fe; border-radius: 4px; }
+
+    .att-history-table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+    .att-history-table th {
+      text-align: left;
+      padding: 0.7rem 0.85rem;
+      background: #f8fafc;
+      color: #64748b;
+      font-weight: 700;
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border-bottom: 1px solid #eef0f3;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    .att-history-table td {
+      padding: 0.8rem 0.85rem;
+      border-bottom: 1px solid #f1f2f4;
+      vertical-align: top;
+      color: #334155;
+    }
+    .att-history-table tr:hover td { background: #fafafe; }
+    .att-history-table tr:last-child td { border-bottom: none; }
+    .att-mono { font-variant-numeric: tabular-nums; font-weight: 700; color: #1e293b; white-space: nowrap; }
+    .att-addr-cell { color: #64748b; font-size: 0.75rem; max-width: 240px; }
+    .att-office-cell { color: #7c3aed; font-weight: 700; font-size: 0.75rem; max-width: 200px; }
+    .att-empty-hint { text-align: center; color: #94a3b8; padding: 3rem 1rem; font-size: 0.875rem; }
+
+    .spinner-inline {
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <button id="mobileMenuToggle" class="mobile-menu-toggle">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+  <div id="mobileBackdrop" class="mobile-backdrop"></div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+      <a href="/" class="sidebar-logo">
+        <div class="logo-box"><span id="logoInitials">HA</span></div>
+        <span id="sidebarCompanyName" class="company-name">HAEGL</span>
+      </a>
+      <button id="collapseBtn" class="collapse-btn" title="Collapse sidebar">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      </button>
+    </div>
+    <div class="role-badge"><div class="role-dot"></div><span>Employee</span></div>
+    <nav class="sidebar-nav">
+      <a href="/employee/worklog/" class="nav-link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+        <span>Work Log</span>
+      </a>
+      <a href="/employee/chat/" class="nav-link">
+        <div class="relative">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          <span id="chatBadge" class="chat-badge hidden">0</span>
+        </div>
+        <span>Chat</span>
+      </a>
+      <a href="/employee/profile/" class="nav-link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        <span>Profile</span>
+      </a>
+      <a href="/employee/attendance/" class="nav-link active">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+        <span>Attendance</span>
+        <div class="active-indicator"></div>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <button onclick="handleLogout()" class="logout-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+        <span>Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="content-wrapper">
+
+      <div class="header-card">
+        <div class="header-bg"></div>
+        <div class="header-content">
+          <div class="header-top">
+            <div>
+              <p class="company-label" id="headerCompanyLabel">HAEGL · ATTENDANCE</p>
+              <div class="greeting-section">
+                <span class="greeting-emoji">📍</span>
+                <span class="greeting-text">GPS Check-In / Check-Out</span>
+              </div>
+            </div>
+            <div class="time-info">
+              <span class="time-badge">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                <span id="currentTime">--:--:--</span>
+              </span>
+              <span class="date-text" id="currentDate"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Office hours policy -->
+      <div class="att-policy-banner">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        <span>Office Hours: 10:00 AM – 6:00 PM</span>
+        <span class="att-policy-sep">·</span>
+        <span>Late after 10:30 AM</span>
+        <span class="att-policy-sep">·</span>
+        <span>Early leave before 5:45 PM</span>
+        <span class="att-policy-sep">·</span>
+        <span>Odd Saturdays (1st, 3rd, 5th): Holiday</span>
+        <span class="att-policy-sep">·</span>
+        <span>Even Saturdays (2nd, 4th): Full Working Day</span>
+        <span class="att-policy-sep">·</span>
+        <span>Sundays: Holiday</span>
+      </div>
+
+      <!-- Punch card — compact, takes less space -->
+      <div class="att-card">
+        <div class="att-card-header">
+          <div class="att-card-header-left">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            <h2>Today's Attendance</h2>
+          </div>
+          <span class="att-office-line" id="officeLine" style="display:none;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"></path><path d="M5 21V7l8-4v18"></path><path d="M19 21V11l-6-4"></path></svg>
+            <span id="officeLineText"></span>
+          </span>
+        </div>
+        <div class="att-card-body">
+          <div class="att-status-row">
+            <div>
+              <div class="att-time-big" id="bigClock">--:--:--</div>
+              <div class="att-date-sub" id="bigDate"></div>
+            </div>
+            <span id="statusPill" class="att-status-pill not-in">Not checked in</span>
+          </div>
+
+          <div class="att-punch-row">
+            <button id="checkInBtn" class="att-punch-btn checkin" onclick="handlePunch('in')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span id="checkInLabel">Check In</span>
+            </button>
+            <button id="checkOutBtn" class="att-punch-btn checkout" onclick="handlePunch('out')" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg>
+              <span id="checkOutLabel">Check Out</span>
+            </button>
+          </div>
+
+          <div class="att-detail-list" id="todayDetails"></div>
+          <p class="att-geo-hint" id="geoHint">Your browser will ask for location access when you check in or out.</p>
+        </div>
+      </div>
+
+      <!-- History — the main focus of the page, own scroller -->
+      <div class="att-card">
+        <div class="att-card-header">
+          <div class="att-card-header-left">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            <h2>Attendance History</h2>
+          </div>
+        </div>
+        <div class="att-scroll-table">
+          <table class="att-history-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Day Type</th>
+                <th>Check In</th>
+                <th>In Status</th>
+                <th>In Location</th>
+                <th>Check Out</th>
+                <th>Out Status</th>
+                <th>Out Location</th>
+                <th>Office</th>
+              </tr>
+            </thead>
+            <tbody id="historyBody">
+              <tr><td colspan="9" class="att-empty-hint">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/auth.js"></script>
+  <script src="/static/js/chat-notifications-widget.js"></script>
+  <script>
+    requireEmployee();
+
+    let officeLoc = null;      // { latitude, longitude, radius_meters, address }
+    let todayRecord = null;    // current attendance row for today
+
+    // ── Office hours / Saturday policy — shared logic, purely computed
+    // from the date, no backend storage needed. ─────────────────────
+    // Grace windows: checking in any time up to 10:30 AM still counts as
+    // "On Time"; only after 10:30 AM is it "Late". Symmetrically,
+    // checking out at/after 5:45 PM counts as a "Full Day"; leaving any
+    // earlier than that is "Early Leave".
+    const LATE_AFTER_MIN = 10 * 60 + 30;   // 10:30 AM — after this, In Status = Late
+    const EARLY_BEFORE_MIN = 17 * 60 + 45; // 5:45 PM  — before this, Out Status = Early
+
+    function ordinal(n) {
+      const s = ['th', 'st', 'nd', 'rd'];
+      const v = n % 100;
+      return n + (s[(v - 20) % 10] || s[v] || s[0]);
+    }
+
+    function getDayType(dateStr) {
+      const d = new Date(dateStr + 'T00:00:00');
+      const day = d.getDay(); // 0=Sun ... 6=Sat
+      if (day === 0) return { type: 'holiday', label: 'Sunday (Off)' };
+      if (day === 6) {
+        const occurrence = Math.ceil(d.getDate() / 7);
+        if (occurrence % 2 === 1) {
+          return { type: 'holiday', label: `${ordinal(occurrence)} Sat (Off)` };
+        }
+        return { type: 'working-sat', label: `${ordinal(occurrence)} Sat (Working)` };
+      }
+      return { type: 'weekday', label: 'Weekday' };
+    }
+
+    function dayTypeBadge(dateStr) {
+      const dt = getDayType(dateStr);
+      return `<span class="att-daytype-badge ${dt.type}">${dt.label}</span>`;
+    }
+
+    function getInStatus(checkInIso) {
+      if (!checkInIso) return null;
+      const d = new Date(checkInIso);
+      const mins = d.getHours() * 60 + d.getMinutes();
+      return mins <= LATE_AFTER_MIN ? 'ontime' : 'late';
+    }
+    function getOutStatus(checkOutIso) {
+      if (!checkOutIso) return null;
+      const d = new Date(checkOutIso);
+      const mins = d.getHours() * 60 + d.getMinutes();
+      return mins >= EARLY_BEFORE_MIN ? 'fullday' : 'early';
+    }
+    function timingBadge(status) {
+      if (!status) return '<span class="att-timing-badge none">—</span>';
+      const labels = { ontime: 'On Time', late: 'Late', fullday: 'Full Day', early: 'Early Leave' };
+      return `<span class="att-timing-badge ${status}">${labels[status]}</span>`;
+    }
+
+    function fmtClockTime(iso) {
+      if (!iso) return '—';
+      return new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    function tickClock() {
+      const n = new Date();
+      const t = n.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      document.getElementById('currentTime').textContent = t;
+      document.getElementById('bigClock').textContent = t;
+      const d = n.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      document.getElementById('currentDate').textContent = d;
+      document.getElementById('bigDate').textContent = d;
+    }
+
+    function getPosition() {
+      return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) { reject(new Error('Geolocation is not supported by this browser.')); return; }
+        navigator.geolocation.getCurrentPosition(
+          pos => resolve(pos.coords),
+          err => reject(err),
+          { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+        );
+      });
+    }
+
+    // ── Reverse geocoding: builds a specific, human-readable address
+    // (place name + road + area + city) instead of Nominatim's raw
+    // display_name, which is often just a long generic road string and
+    // reads the same for two nearby-but-different check-in points. ──
+    async function reverseGeocode(lat, lng) {
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
+          headers: { 'Accept-Language': 'en' }
+        });
+        const data = await res.json();
+        const a = data && data.address;
+        if (a) {
+          const parts = [];
+          const specific = a.amenity || a.shop || a.building || a.office || a.leisure || a.tourism || a.mall;
+          if (specific) parts.push(specific);
+          if (a.road) parts.push(a.house_number ? `${a.house_number} ${a.road}` : a.road);
+          else if (a.pedestrian) parts.push(a.pedestrian);
+          const area = a.suburb || a.neighbourhood || a.quarter;
+          if (area) parts.push(area);
+          const city = a.city || a.town || a.village || a.county;
+          if (city) parts.push(city);
+          if (a.state) parts.push(a.state);
+          if (a.postcode) parts.push(a.postcode);
+          const built = parts.filter(Boolean).join(', ');
+          if (built) return built;
+        }
+        return (data && data.display_name) || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      } catch (e) {
+        console.error('Reverse geocode failed:', e);
+        return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      }
+    }
+
+    function authHeadersJson() {
+      return {
+        'Content-Type': 'application/json',
+        'Authorization': `Token ${localStorage.getItem('token')}`,
+      };
+    }
+
+    async function loadOfficeLocation() {
+      try {
+        const res = await fetch('/api/attendance/office-location/', { headers: authHeadersJson() });
+        officeLoc = await res.json();
+        const line = document.getElementById('officeLine');
+        const lineText = document.getElementById('officeLineText');
+        if (officeLoc && officeLoc.address) {
+          lineText.textContent = officeLoc.address;
+          line.style.display = 'flex';
+        } else {
+          line.style.display = 'none';
+        }
+        if (!officeLoc || officeLoc.latitude == null) {
+          document.getElementById('geoHint').textContent = 'Your admin hasn\'t set the office location yet — check-in will still work.';
+        }
+      } catch {
+        officeLoc = null;
+      }
+    }
+
+    async function loadTodayAndHistory() {
+      try {
+        const res = await fetch('/api/attendance/mine/', { headers: authHeadersJson() });
+        const data = await res.json();
+        const list = Array.isArray(data) ? data : [];
+        const todayStr = new Date().toISOString().split('T')[0];
+        todayRecord = list.find(r => r.date === todayStr) || null;
+        renderToday();
+        renderHistory(list);
+      } catch (e) {
+        console.error('Failed to load attendance:', e);
+      }
+    }
+
+    function renderToday() {
+      const pill = document.getElementById('statusPill');
+      const inBtn = document.getElementById('checkInBtn');
+      const outBtn = document.getElementById('checkOutBtn');
+      const details = document.getElementById('todayDetails');
+
+      if (!todayRecord || !todayRecord.check_in_time) {
+        pill.className = 'att-status-pill not-in';
+        pill.textContent = 'Not checked in';
+        inBtn.disabled = false;
+        outBtn.disabled = true;
+        details.innerHTML = '';
+        return;
+      }
+
+      if (todayRecord.check_in_time && !todayRecord.check_out_time) {
+        pill.className = 'att-status-pill in';
+        pill.textContent = 'Checked in';
+        inBtn.disabled = true;
+        outBtn.disabled = false;
+      } else {
+        pill.className = 'att-status-pill out';
+        pill.textContent = 'Checked out';
+        inBtn.disabled = true;
+        outBtn.disabled = true;
+      }
+
+      const rows = [];
+      rows.push(`
+        <div class="att-detail-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          <span><span class="att-detail-label">Checked in:</span>${fmtClockTime(todayRecord.check_in_time)}
+            ${timingBadge(getInStatus(todayRecord.check_in_time))}
+          </span>
+        </div>`);
+      if (todayRecord.check_in_address) {
+        rows.push(`<div class="att-detail-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg><span>${escapeHtml(todayRecord.check_in_address)}</span></div>`);
+      }
+      if (todayRecord.check_out_time) {
+        rows.push(`
+          <div class="att-detail-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg>
+            <span><span class="att-detail-label">Checked out:</span>${fmtClockTime(todayRecord.check_out_time)}
+              ${timingBadge(getOutStatus(todayRecord.check_out_time))}
+            </span>
+          </div>`);
+        if (todayRecord.check_out_address) {
+          rows.push(`<div class="att-detail-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg><span>${escapeHtml(todayRecord.check_out_address)}</span></div>`);
+        }
+      }
+      details.innerHTML = rows.join('');
+    }
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function renderHistory(list) {
+      const tbody = document.getElementById('historyBody');
+      if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="9" class="att-empty-hint">No attendance records yet — check in above to get started.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = list.map(r => `
+        <tr>
+          <td style="font-weight:700;color:#1e293b;white-space:nowrap;">${r.date}</td>
+          <td>${dayTypeBadge(r.date)}</td>
+          <td class="att-mono">${fmtClockTime(r.check_in_time)}</td>
+          <td>${timingBadge(getInStatus(r.check_in_time))}</td>
+          <td class="att-addr-cell">${escapeHtml(r.check_in_address) || '—'}</td>
+          <td class="att-mono">${fmtClockTime(r.check_out_time)}</td>
+          <td>${timingBadge(getOutStatus(r.check_out_time))}</td>
+          <td class="att-addr-cell">${escapeHtml(r.check_out_address) || '—'}</td>
+          <td class="att-office-cell">${escapeHtml(r.office_address) || '—'}</td>
+        </tr>
+      `).join('');
+    }
+
+    async function handlePunch(kind) {
+      const btn = kind === 'in' ? document.getElementById('checkInBtn') : document.getElementById('checkOutBtn');
+      const label = kind === 'in' ? document.getElementById('checkInLabel') : document.getElementById('checkOutLabel');
+      const originalLabel = label.textContent;
+      btn.disabled = true;
+      label.innerHTML = '<span class="spinner-inline"></span>';
+
+      try {
+        const coords = await getPosition();
+        const address = await reverseGeocode(coords.latitude, coords.longitude);
+
+        const endpoint = kind === 'in' ? '/api/attendance/check-in/' : '/api/attendance/check-out/';
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: authHeadersJson(),
+          body: JSON.stringify({ latitude: coords.latitude, longitude: coords.longitude, address }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.error || 'Something went wrong.');
+        } else {
+          todayRecord = data;
+          renderToday();
+          await loadTodayAndHistory();
+        }
+      } catch (err) {
+        console.error(err);
+        if (err.code === 1) {
+          alert('Location permission denied. Please allow location access in your browser to check in/out.');
+        } else {
+          alert('Could not get your location. Please try again.');
+        }
+      } finally {
+        label.textContent = originalLabel;
+        renderToday();
+      }
+    }
+
+    function setupSidebar() {
+      document.getElementById('mobileMenuToggle').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('mobileBackdrop').classList.toggle('show');
+      });
+      document.getElementById('mobileBackdrop').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('mobileBackdrop').classList.remove('show');
+      });
+      document.getElementById('collapseBtn').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+      });
+      const companyName = localStorage.getItem('company_name') || 'HAEGL';
+      document.getElementById('sidebarCompanyName').textContent = companyName;
+      document.getElementById('logoInitials').textContent = companyName.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+      document.getElementById('headerCompanyLabel').textContent = `${companyName.toUpperCase()} · ATTENDANCE`;
+    }
+
+    async function handleLogout() {
+      try {
+        await fetch('/api/logout/', { method: 'POST', headers: authHeadersJson() });
+      } catch {}
+      localStorage.removeItem('token'); localStorage.removeItem('user'); localStorage.removeItem('is_admin'); localStorage.removeItem('company_name');
+      window.location.href = '/';
+    }
+
+    async function loadChatBadge() {
+      try {
+        const res = await fetch('/api/chat/unread-count/', { headers: authHeadersJson() });
+        const data = await res.json();
+        if (data.total_unread > 0) {
+          const badge = document.getElementById('chatBadge');
+          badge.textContent = data.total_unread > 99 ? '99+' : data.total_unread;
+          badge.classList.remove('hidden');
+        }
+      } catch {}
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      setupSidebar();
+      tickClock();
+      setInterval(tickClock, 1000);
+      loadChatBadge();
+
+      await loadOfficeLocation();
+      await loadTodayAndHistory();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,571 @@
+/* ========================================
+   WORKTRACK - MAIN LANDING PAGE STYLES
+   Premium / professional / dynamic pass
+   ======================================== */
+
+/* RESET & BASE STYLES */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  background: #fbfbff;
+}
+
+/* ========================================
+   ANIMATED BACKGROUND
+   ======================================== */
+.animated-background {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+  background: linear-gradient(135deg, #faf8ff 0%, #f0f9ff 35%, #fef6fb 70%, #f3fdf9 100%);
+}
+
+/* Soft vignette adds depth without darkening the pastel palette */
+.animated-background::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(30, 27, 46, 0.05) 100%);
+  pointer-events: none;
+}
+
+/* Faint grain/texture overlay so large pastel areas don't look flat/cheap */
+.animated-background::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.035;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 1px 1px, #1e1b2e 1px, transparent 0);
+  background-size: 26px 26px;
+}
+
+.bg-bubble {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(64px);
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+/* Every bubble rises bottom -> top, drifting sideways and fading in/out.
+   This is the single source of truth for the rising-bubble motion —
+   used identically on every page so the effect never feels inconsistent. */
+.bg-bubble-1 {
+  width: 480px;
+  height: 480px;
+  background: radial-gradient(circle, rgba(196,181,253,0.4), transparent 70%);
+  bottom: -15%;
+  left: -8%;
+  animation: riseBubble1 18s ease-in-out infinite;
+}
+
+.bg-bubble-2 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(251,207,232,0.4), transparent 70%);
+  bottom: -20%;
+  right: -6%;
+  animation: riseBubble2 22s ease-in-out infinite;
+  animation-delay: 3s;
+}
+
+.bg-bubble-3 {
+  width: 360px;
+  height: 360px;
+  background: radial-gradient(circle, rgba(186,230,253,0.4), transparent 70%);
+  bottom: -10%;
+  left: 22%;
+  animation: riseBubble3 20s ease-in-out infinite;
+  animation-delay: 6s;
+}
+
+.bg-bubble-4 {
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(167,243,208,0.4), transparent 70%);
+  bottom: -18%;
+  right: 15%;
+  animation: riseBubble4 16s ease-in-out infinite;
+  animation-delay: 1.5s;
+}
+
+@keyframes riseBubble1 {
+  0%   { transform: translate3d(0, 0, 0) scale(0.9);        opacity: 0; }
+  12%  { opacity: 0.4; }
+  50%  { transform: translate3d(30px, -55vh, 0) scale(1.05); opacity: 0.35; }
+  88%  { opacity: 0.12; }
+  100% { transform: translate3d(-15px, -110vh, 0) scale(0.92); opacity: 0; }
+}
+
+@keyframes riseBubble2 {
+  0%   { transform: translate3d(0, 0, 0) scale(0.95);        opacity: 0; }
+  12%  { opacity: 0.4; }
+  50%  { transform: translate3d(-40px, -60vh, 0) scale(1.08); opacity: 0.32; }
+  88%  { opacity: 0.1; }
+  100% { transform: translate3d(20px, -115vh, 0) scale(0.9);  opacity: 0; }
+}
+
+@keyframes riseBubble3 {
+  0%   { transform: translate3d(0, 0, 0) scale(0.92);        opacity: 0; }
+  12%  { opacity: 0.38; }
+  50%  { transform: translate3d(25px, -50vh, 0) scale(1.03); opacity: 0.3; }
+  88%  { opacity: 0.1; }
+  100% { transform: translate3d(-25px, -100vh, 0) scale(0.95); opacity: 0; }
+}
+
+@keyframes riseBubble4 {
+  0%   { transform: translate3d(0, 0, 0) scale(0.9);        opacity: 0; }
+  12%  { opacity: 0.35; }
+  50%  { transform: translate3d(-20px, -58vh, 0) scale(1.06); opacity: 0.28; }
+  88%  { opacity: 0.08; }
+  100% { transform: translate3d(15px, -108vh, 0) scale(0.9);  opacity: 0; }
+}
+
+/* ========================================
+   FLOATING SHAPES
+   ======================================== */
+.floating-shapes {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.floating-shape {
+  position: absolute;
+  border-radius: 16px;
+  border: 2px solid;
+}
+
+.shape-1 {
+  width: 44px;
+  height: 44px;
+  left: 8%;
+  top: 18%;
+  border-color: rgba(139,92,246,0.15);
+  background: rgba(139,92,246,0.05);
+  animation: floatShape1 9s ease-in-out infinite;
+}
+
+.shape-2 {
+  width: 60px;
+  height: 60px;
+  left: 85%;
+  top: 12%;
+  border-color: rgba(236,72,153,0.15);
+  background: rgba(236,72,153,0.05);
+  animation: floatShape2 11s ease-in-out infinite;
+}
+
+.shape-3 {
+  width: 36px;
+  height: 36px;
+  left: 15%;
+  top: 75%;
+  border-color: rgba(6,182,212,0.15);
+  background: rgba(6,182,212,0.05);
+  animation: floatShape3 8s ease-in-out infinite;
+}
+
+.shape-4 {
+  width: 52px;
+  height: 52px;
+  left: 80%;
+  top: 70%;
+  border-color: rgba(16,185,129,0.15);
+  background: rgba(16,185,129,0.05);
+  animation: floatShape4 10s ease-in-out infinite;
+}
+
+.shape-5 {
+  width: 30px;
+  height: 30px;
+  left: 50%;
+  top: 8%;
+  border-color: rgba(245,158,11,0.15);
+  background: rgba(245,158,11,0.05);
+  animation: floatShape5 7s ease-in-out infinite;
+}
+
+@keyframes floatShape1 {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(15deg); }
+}
+
+@keyframes floatShape2 {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(-10deg); }
+}
+
+@keyframes floatShape3 {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(10deg); }
+}
+
+@keyframes floatShape4 {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(-5deg); }
+}
+
+@keyframes floatShape5 {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(8deg); }
+}
+
+/* ========================================
+   MAIN CONTAINER
+   ======================================== */
+.container {
+  max-width: 500px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  position: relative;
+  z-index: 10;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* ========================================
+   HEADER SECTION
+   ======================================== */
+.header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+  animation: fadeIn 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(229, 231, 235, 0.7);
+  box-shadow: 0 4px 14px -2px rgba(139, 92, 246, 0.15), 0 1px 2px rgba(0,0,0,0.04);
+  margin-bottom: 1.5rem;
+  backdrop-filter: blur(6px);
+}
+
+.sparkle-icon {
+  width: 14px;
+  height: 14px;
+  color: #8b5cf6;
+  animation: sparkle 2.5s ease-in-out infinite;
+}
+
+@keyframes sparkle {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(15deg) scale(1.1); }
+  75% { transform: rotate(-15deg) scale(1.1); }
+}
+
+.badge-text {
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899, #f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.main-title {
+  font-size: 3rem;
+  font-weight: 900;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: #1e293b;
+  margin-bottom: 0.75rem;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #8b5cf6, #ec4899, #f59e0b);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShift 6s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.subtitle {
+  color: #64748b;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  margin-top: 0.75rem;
+}
+
+/* ========================================
+   ROLE CARDS
+   ======================================== */
+.role-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.role-card {
+  width: 100%;
+  padding: 1.25rem;
+  border-radius: 1.125rem;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 8px 20px -6px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04);
+  cursor: pointer;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.35s ease,
+              border-color 0.35s ease;
+  text-align: left;
+  outline: none;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle top sheen for a premium glass feel */
+.role-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.5), transparent 40%);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Gradient ring that appears on hover for a more "alive" premium feel */
+.role-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(139,92,246,0.5), rgba(236,72,153,0.5), rgba(245,158,11,0.5));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+
+.role-card:hover {
+  transform: translateY(-4px) scale(1.015);
+  box-shadow: 0 20px 40px -12px rgba(15, 23, 42, 0.16), 0 4px 10px rgba(15, 23, 42, 0.06);
+}
+
+.role-card:hover::after {
+  opacity: 1;
+}
+
+.role-card:active {
+  transform: translateY(-1px) scale(0.99);
+}
+
+.role-card-content {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.role-icon {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 10px 18px -4px rgba(0, 0, 0, 0.12);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.role-card:hover .role-icon {
+  transform: scale(1.06) rotate(-3deg);
+}
+
+.employee-icon {
+  background: linear-gradient(135deg, #06b6d4, #3b82f6);
+  box-shadow: 0 10px 18px -4px rgba(6, 182, 212, 0.35);
+}
+
+.admin-icon {
+  background: linear-gradient(135deg, #8b5cf6, #d946ef);
+  box-shadow: 0 10px 18px -4px rgba(139, 92, 246, 0.35);
+}
+
+.role-icon svg {
+  width: 24px;
+  height: 24px;
+  color: white;
+}
+
+.role-info {
+  flex: 1;
+}
+
+.role-title {
+  font-weight: 800;
+  color: #0f172a;
+  font-size: 1.125rem;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.25rem;
+}
+
+.role-description {
+  color: #64748b;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  margin-top: 0.25rem;
+}
+
+/* ========================================
+   ARROW ICON — rebuilt as a pure-CSS chevron
+   so it never depends on a fragile inline SVG.
+   Any existing <svg> inside .arrow-icon is
+   hidden and a crisp chevron is drawn instead.
+   ======================================== */
+.arrow-icon {
+  width: 2.125rem;
+  height: 2.125rem;
+  border-radius: 50%;
+  border: 1px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), background 0.3s ease, border-color 0.3s ease;
+}
+
+.arrow-icon svg {
+  display: none; /* replaced by the ::after chevron below */
+}
+
+.arrow-icon::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-top: 2px solid #94a3b8;
+  border-right: 2px solid #94a3b8;
+  transform: rotate(45deg) translate(-1px, 1px);
+  transition: border-color 0.3s ease;
+}
+
+.role-card:hover .arrow-icon {
+  transform: translateX(5px);
+  background: rgba(139, 92, 246, 0.08);
+  border-color: rgba(139, 92, 246, 0.35);
+}
+
+.role-card:hover .arrow-icon::after {
+  border-color: #7c3aed;
+}
+
+/* ========================================
+   FOOTER
+   ======================================== */
+.footer {
+  margin-top: auto;
+  padding-top: 2rem;
+  text-align: center;
+}
+
+.footer p {
+  color: #94a3b8;
+  font-size: 0.75rem;
+  letter-spacing: 0.01em;
+}
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+.animate-fadeIn {
+  animation: fadeIn 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Stagger the two role cards in on load for a more dynamic entrance */
+.role-cards .role-card:nth-child(1) {
+  animation: cardIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+}
+.role-cards .role-card:nth-child(2) {
+  animation: cardIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.22s both;
+}
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+@media (max-width: 640px) {
+  .main-title {
+    font-size: 2.25rem;
+  }
+
+  .container {
+    padding: 1rem;
+  }
+
+  .role-card {
+    padding: 1rem;
+  }
+
+  .role-icon {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .role-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bg-bubble,
+  .floating-shape,
+  .gradient-text,
+  .role-card,
+  .role-icon,
+  .arrow-icon {
+    animation: none !important;
+    transition: none !important;
+  }
+}

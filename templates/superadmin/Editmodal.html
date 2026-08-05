@@ -1,0 +1,28 @@
+<!-- Generic Edit Modal (driven by SA_ENTITY_CONFIGS in superadmin.js) -->
+<div id="saEditModal" class="sa-modal-backdrop" style="display:none;">
+  <div class="sa-modal">
+    <div class="sa-modal-header">
+      <div>
+        <div class="sa-modal-sub" id="saEditModalSub">Editing</div>
+        <div class="sa-modal-title" id="saEditModalTitle">Record</div>
+      </div>
+      <button class="sa-modal-close" onclick="saCloseModal('saEditModal')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    <form id="saEditForm">
+      <div class="sa-modal-body">
+        <div class="sa-error-box" id="saEditError"></div>
+        <div id="saEditNote" class="sa-hint" style="margin-bottom:1rem;"></div>
+        <div id="saEditFields"></div>
+      </div>
+      <div class="sa-modal-footer">
+        <button type="button" class="sa-btn sa-btn-danger" id="saEditDeleteBtn" onclick="saConfirmDeleteCurrent()">Delete</button>
+        <div style="display:flex;gap:0.6rem;">
+          <button type="button" class="sa-btn sa-btn-outline" onclick="saCloseModal('saEditModal')">Cancel</button>
+          <button type="submit" class="sa-btn sa-btn-primary">Save Changes</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

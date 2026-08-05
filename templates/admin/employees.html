@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employees - Admin - WorkTrack</title>
+  <link rel="icon" href="/static/assets/apple-icon.jpeg">
+  <link rel="stylesheet" href="/static/css/reset.css">
+  <link rel="stylesheet" href="/static/css/variables.css">
+  <link rel="stylesheet" href="/static/css/animations.css">
+  <link rel="stylesheet" href="/static/css/admin-employees.css">
+  <link rel="stylesheet" href="/static/css/responsive.css">
+  <style>
+    /* Stack the three new inputs (name/email/password) in the invite card
+       without needing changes to admin-employees.css */
+    .invite-right-stacked {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      min-width: 260px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Mobile Menu Toggle -->
+  <button id="mobileMenuToggle" class="mobile-menu-toggle">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+
+  <!-- Mobile Backdrop -->
+  <div id="mobileBackdrop" class="mobile-backdrop"></div>
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="sidebar">
+    <!-- Logo -->
+    <div class="sidebar-header">
+      <a href="/" class="sidebar-logo">
+        <div class="logo-box">
+          <span id="logoInitials">HA</span>
+        </div>
+        <span id="sidebarCompanyName" class="company-name">HAEGL</span>
+      </a>
+      <button id="collapseBtn" class="collapse-btn" title="Collapse sidebar">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Role Badge -->
+    <div class="role-badge">
+      <div class="role-dot"></div>
+      <span>Admin / Manager</span>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+      <a href="/admin/worklog/" class="nav-link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="3" y1="9" x2="21" y2="9"></line>
+          <line x1="9" y1="21" x2="9" y2="9"></line>
+        </svg>
+        <span>Work Log</span>
+      </a>
+      <a href="/admin/chat/" class="nav-link">
+        <div class="relative">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span id="chatBadge" class="chat-badge hidden">0</span>
+        </div>
+        <span>Chat</span>
+      </a>
+      <a href="/admin/employees/" class="nav-link active">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        <span>Employees</span>
+        <div class="active-indicator"></div>
+      </a>
+      <a href="/admin/analytics/" class="nav-link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="20" x2="18" y2="10"></line>
+          <line x1="12" y1="20" x2="12" y2="4"></line>
+          <line x1="6" y1="20" x2="6" y2="14"></line>
+        </svg>
+        <span>Analytics</span>
+      </a>
+      <a href="/admin/profile/" class="nav-link">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+  <span>Profile</span>
+</a>
+<a href="/employee/attendance/" class="nav-link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+          <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+        <span>Attendance</span>
+      </a>
+    </nav>
+
+    <!-- Footer -->
+    <div class="sidebar-footer">
+      <button onclick="handleLogout()" class="logout-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        <span>Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="page-wrapper">
+
+      <!-- Header -->
+      <div class="page-header">
+        <div class="header-left">
+          <div class="employee-count-badge">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <span id="employeeCount">0</span> Total
+          </div>
+          <h1 class="page-title">Employees</h1>
+          <p class="page-subtitle">Manage your team members</p>
+        </div>
+        <div class="header-actions">
+          <button onclick="refreshEmployees()" id="refreshBtn" class="refresh-btn" title="Refresh employee list">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="refreshIcon">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            <span id="refreshText">Refresh</span>
+          </button>
+          <button onclick="showAddModal()" class="add-employee-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Add Employee
+          </button>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div class="search-container">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="search-icon">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="Search by name, email, or department..."
+          class="search-input"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+          name="employee-filter-field"
+          value=""
+        >
+        <button
+          type="button"
+          id="clearSearchBtn"
+          class="clear-search-btn"
+          title="Clear search"
+          style="display:none;"
+        >&times;</button>
+      </div>
+
+      <!-- Add Co-Admin (owner only — hidden by default, shown after we confirm ownership) -->
+      <div class="invite-card" id="inviteCard" style="display:none;">
+        <div class="invite-content">
+          <div class="invite-left">
+            <div class="invite-icon-wrapper">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="invite-icon">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+            </div>
+            <div class="invite-text">
+              <h3 class="invite-title">Add a Co-Admin</h3>
+              <p class="invite-desc">Creates their account instantly and emails them the login credentials — no invite link to accept.</p>
+            </div>
+          </div>
+          <div class="invite-right invite-right-stacked">
+            <div class="email-input-wrapper">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="email-icon">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <input type="text" id="inviteFullName" placeholder="Full name" class="email-input" autocomplete="off">
+            </div>
+            <div class="email-input-wrapper">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="email-icon">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+              <input type="email" id="inviteEmail" placeholder="colleague@company.com" class="email-input" autocomplete="off">
+            </div>
+            <div class="email-input-wrapper">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="email-icon">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+              <input type="password" id="invitePassword" placeholder="Set a password" class="email-input" autocomplete="new-password">
+            </div>
+            <button onclick="sendInvite()" class="send-invite-btn">Create Co-Admin</button>
+          </div>
+        </div>
+        <div id="inviteMsg" class="invite-msg hidden"></div>
+      </div>
+
+      <!-- Employee Cards Grid -->
+      <div id="employeeGrid" class="employee-grid">
+        <div class="loading-state">
+          <div class="loading-spinner"></div>
+          <p>Loading employees...</p>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Add Employee Modal -->
+  <div id="addModal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <!-- Animated Background -->
+      <div class="modal-bg-effects">
+        <div class="modal-blob modal-blob-1"></div>
+        <div class="modal-blob modal-blob-2"></div>
+      </div>
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <div class="modal-header-left">
+          <p class="modal-subtitle">Employee Management</p>
+          <h2 class="modal-title">Add Employee</h2>
+        </div>
+        <button onclick="hideAddModal()" class="modal-close-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Form -->
+      <form id="addEmployeeForm" class="modal-body" autocomplete="off">
+        <!-- Full Name -->
+        <div class="form-group">
+          <label>Full Name</label>
+          <div class="form-input-wrapper cyan">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <input type="text" name="name" placeholder="John Doe" required autocomplete="off">
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div class="form-group">
+          <label>Email</label>
+          <div class="form-input-wrapper blue">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            <input type="email" name="email" placeholder="john@company.com" required autocomplete="off">
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="form-group">
+          <label>Password</label>
+          <div class="form-input-wrapper red">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            <input type="password" name="password" placeholder="••••••••" required autocomplete="new-password">
+          </div>
+        </div>
+
+        <!-- Department -->
+        <div class="form-group">
+          <label>Department</label>
+          <div class="form-input-wrapper violet">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
+              <line x1="9" y1="2" x2="9" y2="22"></line>
+            </svg>
+            <input type="text" name="department" placeholder="Engineering" required autocomplete="off">
+          </div>
+        </div>
+
+        <!-- Designation -->
+        <div class="form-group">
+          <label>Designation</label>
+          <div class="form-input-wrapper emerald">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+            </svg>
+            <input type="text" name="role" placeholder="Software Engineer" required autocomplete="off">
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="form-actions">
+          <button type="submit" id="submitBtn" class="submit-btn">
+            <span class="btn-text">Add Employee</span>
+            <div class="btn-spinner hidden">
+              <div class="spinner"></div>
+            </div>
+          </button>
+          <button type="button" onclick="hideAddModal()" class="cancel-btn">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/auth.js"></script>
+  <script src="/static/js/chat-notifications-widget.js"></script>
+  <script src="/static/js/utils.js"></script>
+  <script>
+    // Authentication check
+    requireAdmin();
+
+    // State
+    let employees = [];
+    let searchTerm = '';
+    let deletingId = null;
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', async () => {
+      // ── Force-clear the search box on every load ──────────────────
+      // Some browsers ignore autocomplete="off" on fields that look like
+      // a login/email box and silently fill in a saved value AFTER the
+      // page has rendered. That leaves this box holding leftover text
+      // the user never typed, which then filters the employee list down
+      // to whatever happened to match. Clearing it explicitly here wins
+      // regardless of what the browser tried to autofill.
+      const searchInput = document.getElementById('searchInput');
+      searchInput.value = '';
+      searchTerm = '';
+
+      // Also re-clear a beat later, in case autofill fires asynchronously
+      // right after DOMContentLoaded (this happens in some browsers).
+      setTimeout(() => {
+        if (searchInput.value && searchInput.value !== searchTerm) {
+          searchInput.value = '';
+          searchTerm = '';
+          renderEmployees();
+        }
+      }, 300);
+
+      await loadEmployees();
+      setupEventListeners();
+      updateCompanyName();
+      loadChatBadge();
+      checkOwnerAndToggleInviteCard();
+    });
+
+    // Setup event listeners
+    function setupEventListeners() {
+      const searchInput = document.getElementById('searchInput');
+      const clearBtn = document.getElementById('clearSearchBtn');
+
+      // Search
+      searchInput.addEventListener('input', (e) => {
+        searchTerm = e.target.value;
+        clearBtn.style.display = searchTerm ? 'flex' : 'none';
+        renderEmployees();
+      });
+
+      // Manual clear button (X) — always visible once there's text,
+      // so the user has an obvious, one-click way to reset the filter.
+      clearBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        searchTerm = '';
+        clearBtn.style.display = 'none';
+        renderEmployees();
+        searchInput.focus();
+      });
+
+      // Form submission
+      document.getElementById('addEmployeeForm').addEventListener('submit', handleAddEmployee);
+
+      // Close modal on backdrop click
+      document.getElementById('addModal').addEventListener('click', (e) => {
+        if (e.target.id === 'addModal') hideAddModal();
+      });
+
+      // Mobile menu
+      const mobileToggle = document.getElementById('mobileMenuToggle');
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.getElementById('mobileBackdrop');
+
+      mobileToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('open');
+        backdrop.classList.toggle('show');
+      });
+
+      backdrop.addEventListener('click', () => {
+        sidebar.classList.remove('open');
+        backdrop.classList.remove('show');
+      });
+
+      // Sidebar collapse
+      document.getElementById('collapseBtn').addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+      });
+    }
+
+    // Only the company owner sees the "Add a Co-Admin" card
+    async function checkOwnerAndToggleInviteCard() {
+      const inviteCard = document.getElementById('inviteCard');
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/me/', {
+          headers: { 'Authorization': `Token ${token}` }
+        });
+        const me = await res.json();
+        const isOwner = me?.profile?.is_owner === true;
+        inviteCard.style.display = isOwner ? '' : 'none';
+      } catch {
+        inviteCard.style.display = 'none';
+      }
+    }
+
+    async function loadEmployees(retryCount = 0) {
+      const data = await getAdminEmployees();
+      if (Array.isArray(data)) {
+        employees = data;
+        renderEmployees();
+      } else if (data && data.__error && retryCount === 0) {
+        // Transient failure right after page load (auth header race, cold
+        // dev-server request, etc.) — retry once automatically before
+        // giving up and showing an error to the user.
+        console.warn('Employee list failed, retrying once:', data);
+        setTimeout(() => loadEmployees(1), 400);
+      } else {
+        console.error('Failed to load employees:', data);
+        document.getElementById('employeeGrid').innerHTML = `
+          <div class="empty-state">
+            <h2 class="empty-title">Couldn't load employees</h2>
+            <p class="empty-desc">${data?.error || 'Please refresh the page.'}</p>
+          </div>`;
+      }
+    }
+
+    // Refresh employees
+    async function refreshEmployees() {
+      const btn = document.getElementById('refreshBtn');
+      const icon = document.getElementById('refreshIcon');
+      const text = document.getElementById('refreshText');
+
+      btn.disabled = true;
+      icon.classList.add('spinning');
+      text.textContent = 'Refreshing...';
+
+      await loadEmployees();
+
+      btn.disabled = false;
+      icon.classList.remove('spinning');
+      text.textContent = 'Refresh';
+    }
+
+    // Render employees
+    function renderEmployees() {
+      const grid = document.getElementById('employeeGrid');
+      const count = document.getElementById('employeeCount');
+
+      count.textContent = employees.length;
+
+      const filtered = employees.filter(emp =>
+        `${emp.first_name} ${emp.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (emp.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (emp.profile?.department || '').toLowerCase().includes(searchTerm.toLowerCase())
+      );
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon-wrapper">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </div>
+            <h2 class="empty-title">No Employees Found</h2>
+            <p class="empty-desc">Try another search keyword or add a new employee.</p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = filtered.map((emp, idx) => `
+        <div class="employee-card" style="animation-delay: ${idx * 0.05}s">
+          <div class="card-gradient-line"></div>
+          <div class="card-glow"></div>
+          <div class="card-content">
+            <div class="card-main">
+              <div class="avatar-wrapper">
+                ${emp.profile?.photo ? `
+                  <img src="${emp.profile.photo}" alt="${emp.first_name}" class="avatar-img">
+                ` : `
+                  <div class="avatar-initials">
+                    ${emp.first_name?.[0] || ''}${emp.last_name?.[0] || ''}
+                  </div>
+                `}
+                <div class="avatar-dot"></div>
+              </div>
+              <div class="card-details">
+                <div class="card-header-row">
+                  <div class="card-header-left">
+                    <h2 class="employee-name">${emp.first_name} ${emp.last_name}</h2>
+                    <p class="employee-label">Employee Profile</p>
+                  </div>
+                  <div class="card-header-right">
+                    ${emp.profile?.is_admin ? `
+                      <span class="role-badge-admin">Admin</span>
+                    ` : `
+                      <span class="role-badge-employee">Employee</span>
+                    `}
+                  </div>
+                </div>
+                <div class="info-pills">
+                  <div class="info-pill blue">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                      <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg>
+                    <div class="pill-content">
+                      <p class="pill-label">Email</p>
+                      <p class="pill-value">${emp.email || 'N/A'}</p>
+                    </div>
+                  </div>
+                  <div class="info-pill purple">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
+                      <line x1="9" y1="2" x2="9" y2="22"></line>
+                    </svg>
+                    <div class="pill-content">
+                      <p class="pill-label">Department</p>
+                      <p class="pill-value">${emp.profile?.department || 'Not Assigned'}</p>
+                    </div>
+                  </div>
+                  <div class="info-pill emerald">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                      <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                    </svg>
+                    <div class="pill-content">
+                      <p class="pill-label">Designation</p>
+                      <p class="pill-value">${emp.profile?.designation || 'Developer'}</p>
+                    </div>
+                  </div>
+                  <div class="info-pill orange">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                    </svg>
+                    <div class="pill-content">
+                      <p class="pill-label">Phone</p>
+                      <p class="pill-value">${emp.profile?.phone || 'Not Available'}</p>
+                    </div>
+                  </div>
+                  <div class="info-pill pink">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                    </svg>
+                    <div class="pill-content">
+                      <p class="pill-label">Employee ID</p>
+                      <p class="pill-value">${emp.profile?.employee_id || 'Not Assigned'}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card-footer">
+              <div class="active-status">
+                <div class="status-dot"></div>
+                <span>Active Employee</span>
+              </div>
+              <button onclick="handleDelete(${emp.id}, '${emp.first_name} ${emp.last_name}')" class="delete-btn" ${deletingId === emp.id ? 'disabled' : ''}>
+                ${deletingId === emp.id ? `
+                  <div class="btn-spinner-sm">
+                    <div class="spinner-sm"></div>
+                  </div>
+                ` : `
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                `}
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Handle add employee
+    async function handleAddEmployee(e) {
+      e.preventDefault();
+      const form = e.target;
+      const submitBtn = document.getElementById('submitBtn');
+      const btnText = submitBtn.querySelector('.btn-text');
+      const btnSpinner = submitBtn.querySelector('.btn-spinner');
+
+      submitBtn.disabled = true;
+      btnText.classList.add('hidden');
+      btnSpinner.classList.remove('hidden');
+
+      const formData = new FormData(form);
+      const token = localStorage.getItem('token');
+
+      try {
+        const res = await fetch('/api/register/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Token ${token}`,
+          },
+          body: JSON.stringify({
+            email: formData.get('email'),
+            password: formData.get('password'),
+            full_name: formData.get('name'),
+            department: formData.get('department'),
+            designation: formData.get('role'),
+            is_admin: false,
+          })
+        });
+
+        let data = {};
+        try { data = await res.json(); } catch { /* non-JSON error body */ }
+
+        if (res.ok && (data.user || data.id)) {
+          showToast('Employee added! Login credentials sent to ' + formData.get('email'), 'success');
+          await loadEmployees();
+          hideAddModal();
+          form.reset();
+        } else {
+          showToast(data.error || data.detail || `Failed to add employee (HTTP ${res.status})`, 'error');
+        }
+      } catch {
+        showToast('Connection failed', 'error');
+      }
+
+      submitBtn.disabled = false;
+      btnText.classList.remove('hidden');
+      btnSpinner.classList.add('hidden');
+    }
+
+    // Handle delete
+    async function handleDelete(id, name) {
+      if (!confirm(`Are you sure you want to remove ${name}? This will delete all their data.`)) return;
+
+      deletingId = id;
+      renderEmployees();
+
+      const data = await deleteEmployee(id);
+
+      if (data.message) {
+        employees = employees.filter(e => e.id !== id);
+        renderEmployees();
+        showToast(`${name} has been removed`, 'success');
+      } else {
+        showToast('Failed to delete employee', 'error');
+      }
+
+      deletingId = null;
+      renderEmployees();
+    }
+
+    // Create a Co-Admin (owner only) — direct credential creation, no invite link
+    async function sendInvite() {
+      const fullName = document.getElementById('inviteFullName').value.trim();
+      const email = document.getElementById('inviteEmail').value.trim();
+      const password = document.getElementById('invitePassword').value;
+
+      if (!fullName || !email || !password) {
+        showToast('Please fill in name, email, and password', 'error');
+        return;
+      }
+
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/admin/invite/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Token ${token}` },
+        body: JSON.stringify({ full_name: fullName, email, password })
+      });
+
+      let data = {};
+      try { data = await res.json(); } catch { /* non-JSON error body */ }
+
+      const msgEl = document.getElementById('inviteMsg');
+      msgEl.textContent = data.message || data.error || `Request failed (HTTP ${res.status})`;
+      msgEl.classList.remove('hidden');
+
+      if (res.ok) {
+        document.getElementById('inviteFullName').value = '';
+        document.getElementById('inviteEmail').value = '';
+        document.getElementById('invitePassword').value = '';
+        showToast(data.message || 'Co-admin created', 'success');
+      } else {
+        showToast(data.error || 'Failed to create co-admin', 'error');
+      }
+
+      setTimeout(() => msgEl.classList.add('hidden'), 5000);
+    }
+
+    // Modal controls
+    function showAddModal() {
+      document.getElementById('addModal').classList.remove('hidden');
+    }
+
+    function hideAddModal() {
+      document.getElementById('addModal').classList.add('hidden');
+      document.getElementById('addEmployeeForm').reset();
+    }
+
+    // Update company name
+    function updateCompanyName() {
+      const companyName = localStorage.getItem('company_name') || 'HAEGL';
+      document.getElementById('sidebarCompanyName').textContent = companyName;
+      document.getElementById('logoInitials').textContent = companyName.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+    }
+
+    // Load chat badge
+    async function loadChatBadge() {
+      try {
+        const data = await getUnreadCount();
+        if (data.total_unread > 0) {
+          const badge = document.getElementById('chatBadge');
+          badge.textContent = data.total_unread > 99 ? '99+' : data.total_unread;
+          badge.classList.remove('hidden');
+        }
+      } catch {}
+    }
+
+    // Toast notification
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          ${type === 'success' ? '<polyline points="20 6 9 17 4 12"></polyline>' :
+            type === 'error' ? '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>' :
+            '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line>'}
+        </svg>
+        <span>${message}</span>
+        <button onclick="this.parentElement.remove()" class="toast-close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      `;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // Logout
+    async function handleLogout() {
+      try {
+        await fetch('/api/logout/', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Token ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json',
+          },
+        });
+      } catch {}
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('is_admin');
+      localStorage.removeItem('company_name');
+      window.location.href = '/';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+
+# Frontend URL patterns - serve the vanilla JS app
+frontend_patterns = [
+	# Main pages
+	path('', TemplateView.as_view(template_name='index.html'), name='home'),
+	path('employee-login/', TemplateView.as_view(template_name='employee-login.html'), name='employee_login'),
+	path('admin-login/', TemplateView.as_view(template_name='admin-login.html'), name='admin_login'),
+
+	# Employee portal
+	re_path(r'^employee/', TemplateView.as_view(template_name='employee/index.html')),
+
+	# Admin portal
+	re_path(r'^admin/', TemplateView.as_view(template_name='admin/index.html')),
+
+	# Superadmin portal
+	re_path(r'^superadmin/', TemplateView.as_view(template_name='superadmin/index.html')),
+]
+
+urlpatterns += frontend_patterns + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

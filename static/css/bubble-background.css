@@ -1,0 +1,80 @@
+/* ========================================
+   BUBBLE BACKGROUND ANIMATIONS
+   ======================================== */
+
+.bubble-bg {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.bubble {
+  position: absolute;
+  bottom: -100px;
+  /* left is expected to be set inline per-bubble (e.g. style="left: 12%")
+     by whatever renders the bubbles (template/JS). If a bubble is ever
+     missing that, fall back to something reasonable instead of stacking
+     every bubble at the left edge. */
+  left: var(--bubble-left, 10%);
+
+  /* THE FIX: width/height were never wired to --bubble-size, so every
+     bubble rendered at 0x0 and was effectively invisible — which reads
+     as "the rise animation isn't working" even though the keyframes
+     were correct all along. */
+  width: var(--bubble-size);
+  height: var(--bubble-size);
+
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, var(--bubble-color), transparent);
+  border: 1px solid var(--bubble-color);
+  backdrop-filter: blur(1px);
+  box-shadow: 0 0 calc(var(--bubble-size) / 3) var(--bubble-color);
+  animation: bubbleRise var(--duration) linear infinite;
+  animation-delay: var(--delay);
+  opacity: 0.9;
+  will-change: transform, opacity;
+}
+
+@keyframes bubbleRise {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.6);
+    opacity: 0.9;
+  }
+  33% {
+    transform: translate3d(0, -33vh, 0) scale(1);
+    opacity: 0.9;
+  }
+  66% {
+    transform: translate3d(0, -66vh, 0) scale(1.1);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate3d(0, calc(-100vh - var(--bubble-size) - 100px), 0) scale(0.8);
+    opacity: 0.9;
+  }
+}
+
+/* Bubble individual animations */
+.b1 { --bubble-color: rgba(192,132,252,0.18); --bubble-size: 80px; --duration: 18s; --delay: 0s; }
+.b2 { --bubble-color: rgba(167,139,250,0.15); --bubble-size: 120px; --duration: 22s; --delay: 2s; }
+.b3 { --bubble-color: rgba(192,132,252,0.16); --bubble-size: 60px; --duration: 16s; --delay: 4s; }
+.b4 { --bubble-color: rgba(129,140,248,0.16); --bubble-size: 100px; --duration: 20s; --delay: 1s; }
+.b5 { --bubble-color: rgba(129,140,248,0.15); --bubble-size: 90px; --duration: 24s; --delay: 3s; }
+.b6 { --bubble-color: rgba(129,140,248,0.18); --bubble-size: 70px; --duration: 19s; --delay: 5s; }
+.b7 { --bubble-color: rgba(232,121,249,0.18); --bubble-size: 110px; --duration: 21s; --delay: 2.5s; }
+.b8 { --bubble-color: rgba(232,121,249,0.15); --bubble-size: 85px; --duration: 17s; --delay: 1.5s; }
+.b9 { --bubble-color: rgba(232,121,249,0.16); --bubble-size: 75px; --duration: 23s; --delay: 0.5s; }
+.b10 { --bubble-color: rgba(192,132,252,0.17); --bubble-size: 95px; --duration: 25s; --delay: 6s; }
+.b11 { --bubble-color: rgba(167,139,250,0.14); --bubble-size: 65px; --duration: 15s; --delay: 3.5s; }
+.b12 { --bubble-color: rgba(129,140,248,0.17); --bubble-size: 105px; --duration: 26s; --delay: 4.5s; }
+.b13 { --bubble-color: rgba(232,121,249,0.17); --bubble-size: 55px; --duration: 14s; --delay: 2.2s; }
+.b14 { --bubble-color: rgba(192,132,252,0.15); --bubble-size: 115px; --duration: 27s; --delay: 5.5s; }
+.b15 { --bubble-color: rgba(167,139,250,0.16); --bubble-size: 80px; --duration: 28s; --delay: 7s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .bubble {
+    animation: none !important;
+  }
+}

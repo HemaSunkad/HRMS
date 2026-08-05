@@ -1,0 +1,1745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Work Log - WorkTrack</title>
+  <link rel="icon" href="/static/assets/apple-icon.jpeg">
+  <link rel="stylesheet" href="/static/css/admin-worklog.css">
+  <link rel="stylesheet" href="/static/css/responsive.css">
+  <style>
+    /* ===== Page-specific additions on top of admin-worklog.css (matches employee worklog page) ===== */
+
+    .content-wrapper {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    @media (min-width: 1024px) {
+      .content-wrapper {
+        padding: 0.875rem 1.5rem;
+      }
+    }
+
+    /* ---- Thinner header/greeting bar ---- */
+    .header-card {
+      margin-bottom: 0 !important;
+      flex-shrink: 0;
+    }
+    .header-content {
+      padding: 0.5rem 1.25rem !important;
+    }
+    .company-label {
+      font-size: 0.5rem !important;
+      margin-bottom: 0.125rem !important;
+    }
+    .greeting-emoji {
+      font-size: 0.9375rem !important;
+    }
+    .greeting-text {
+      font-size: 0.9375rem !important;
+    }
+    .time-badge {
+      padding: 0.1875rem 0.5rem !important;
+      font-size: 0.625rem !important;
+    }
+    .date-text {
+      font-size: 0.625rem !important;
+    }
+    .header-bottom {
+      margin-top: 0.5rem !important;
+    }
+    .stat-badge {
+      padding: 0.25rem 0.5rem !important;
+    }
+    .assign-task-btn {
+      padding: 0.375rem 0.875rem !important;
+    }
+    /* ---- Table card gets the remaining space, with its own visible scrollbar ---- */
+    .table-card {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Scroll wrapper: holds the table-container plus the left/right
+       edge-fade overlays that hint there's more content to scroll to
+       (mainly relevant on mobile / narrow viewports). ---- */
+    .table-scroll-wrapper {
+      position: relative;
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+    }
+
+    .table-container {
+      overflow: auto;
+      flex: 1;
+      min-height: 0;
+      scrollbar-width: auto;
+      scrollbar-color: #8b5cf6 #f3f4f6;
+      /* momentum/smooth scrolling on touch devices */
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+    }
+    .table-container::-webkit-scrollbar {
+      width: 12px;
+      height: 12px;
+    }
+    .table-container::-webkit-scrollbar-track {
+      background: #f3f4f6;
+    }
+    .table-container::-webkit-scrollbar-thumb {
+      background: #8b5cf6;
+      border-radius: 6px;
+      border: 3px solid #f3f4f6;
+    }
+    .table-container::-webkit-scrollbar-thumb:hover {
+      background: #7c3aed;
+    }
+
+    /* Edge fade overlays — fixed to the wrapper so they stay pinned to
+       the visible left/right edges regardless of scroll position. */
+    .scroll-fade {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 28px;
+      pointer-events: none;
+      z-index: 5;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    .scroll-fade-left {
+      left: 0;
+      background: linear-gradient(to right, rgba(255,255,255,0.97), rgba(255,255,255,0));
+    }
+    .scroll-fade-right {
+      right: 0;
+      background: linear-gradient(to left, rgba(255,255,255,0.97), rgba(255,255,255,0));
+    }
+    .scroll-fade.visible {
+      opacity: 1;
+    }
+
+    /* Make sure every table cell wraps and stays fully readable —
+       nothing gets clipped or ellipsis-truncated. */
+    .worklog-table td {
+      white-space: normal;
+      word-break: break-word;
+      vertical-align: top;
+    }
+    .worklog-table td.nowrap-cell {
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+    .worklog-table th {
+      vertical-align: middle;
+    }
+
+    /* Zebra striping + stronger row separation for readability */
+    .worklog-table tbody tr:nth-child(even) {
+      background: #fafafa;
+    }
+    .worklog-table tbody tr {
+      border-bottom: 1px solid #eef0f3;
+    }
+    .worklog-table tbody tr:hover {
+      background: #f5f0ff;
+    }
+
+    /* Column dividers so rows/columns are visually crisp */
+    .worklog-table th,
+    .worklog-table td {
+      border-right: 1px solid #f1f2f4;
+    }
+    .worklog-table th:last-child,
+    .worklog-table td:last-child {
+      border-right: none;
+    }
+
+    .no-time-cell {
+      color: #d1d5db;
+      font-weight: 700;
+    }
+
+    /* ---- Task column: compact, clamped presentation — wrapped as
+       short paragraphs instead of stretching the row height. Long
+       text is clamped to 3 lines with overflow hidden. ---- */
+    .worklog-table td:nth-child(3) { /* Task */
+      min-width: 200px;
+      max-width: 320px;
+    }
+    /* ---- Remark column: kept narrow — full text is available via the
+       click-to-preview popover, so it doesn't need to eat table width.
+       No min-width, so rows that are just "—" stay narrow too. ---- */
+    .worklog-table td:nth-child(10) { /* Remark */
+      max-width: 150px;
+    }
+    /* ---- Comment column (admin's own editable comment input): capped
+       so a long typed comment doesn't stretch the whole table — the
+       input scrolls internally instead of pushing other columns out. ---- */
+    .worklog-table td:nth-child(12) { /* Comment */
+      max-width: 170px;
+    }
+    .worklog-table td:nth-child(12) .comment-input {
+      width: 100%;
+      box-sizing: border-box;
+    }
+    /* ---- Reassigned column: shrink-to-fit AND capped — never wider
+       than its content actually needs, whether that's "—" or
+       "→ Name", with long names truncated via ellipsis rather than
+       stretching the column. ---- */
+    .reassigned-cell {
+      width: 1%;
+      max-width: 130px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .task-text {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.45;
+      word-break: normal;
+      overflow-wrap: break-word;
+      margin: 0;
+    }
+
+    /* ---- Task/Remark/Comment cell click-to-preview: Task, Remark, and
+       Admin Comment columns all get this treatment. ---- */
+    .task-clickable,
+    .remark-clickable,
+    .comment-clickable {
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+    .task-clickable:hover,
+    .remark-clickable:hover,
+    .comment-clickable:hover {
+      color: #7c3aed;
+    }
+    td.task-cell-active {
+      background: #f5f3ff !important;
+    }
+
+    .task-popover {
+      position: fixed;
+      z-index: 1000;
+      background: #1e293b;
+      color: #f8fafc;
+      padding: 0.75rem 1rem;
+      border-radius: 0.75rem;
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.25), 0 8px 10px -6px rgba(0,0,0,0.15);
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: opacity 0.15s ease, transform 0.15s ease;
+      word-break: break-word;
+      white-space: normal;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+    .task-popover.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .task-popover::before {
+      content: '';
+      position: absolute;
+      top: -6px;
+      left: 20px;
+      width: 12px;
+      height: 12px;
+      background: #1e293b;
+      transform: rotate(45deg);
+    }
+    .task-popover.arrow-bottom::before {
+      top: auto;
+      bottom: -6px;
+      transform: rotate(225deg);
+    }
+
+    /* ---- Action button icons: consistent sizing/spacing (admin actions: approve / reject / reassign) ---- */
+    .action-buttons {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      flex-wrap: nowrap;
+    }
+    .action-btn svg {
+      display: block;
+    }
+    .action-btn {
+      width: 1.875rem;
+      height: 1.875rem;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .action-btn.approve {
+      background: #dcfce7;
+      color: #16a34a;
+      border: 1px solid #bbf7d0;
+    }
+    .action-btn.approve:hover { background: #bbf7d0; }
+
+    .action-btn.reject {
+      background: #fee2e2;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+    }
+    .action-btn.reject:hover { background: #fecaca; }
+
+    .action-btn.reassign {
+      background: #ede9fe;
+      color: #7c3aed;
+      border: 1px solid #ddd6fe;
+    }
+    .action-btn.reassign:hover { background: #ddd6fe; }
+
+    .action-btn.pause {
+      background: #fff7ed;
+      color: #ea580c;
+      border: 1px solid #fed7aa;
+    }
+    .action-btn.pause:hover { background: #fed7aa; }
+
+    .action-btn.resume {
+      background: #dcfce7;
+      color: #16a34a;
+      border: 1px solid #bbf7d0;
+    }
+    .action-btn.resume:hover { background: #bbf7d0; }
+
+    .status-badge.paused {
+      background: #fff7ed;
+      color: #ea580c;
+      border: 1px solid #fed7aa;
+    }
+
+    /* ---- Status cell: the status badge and the "🖊️ Manual" badge
+       (when the entry was manually logged) reliably stack Manual
+       BELOW the status badge, never beside it — display:flex on the
+       wrapper plus inline-flex + width:fit-content on each badge
+       stops either one from stretching to fill the row and forcing
+       them onto the same visual line. ---- */
+    .status-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.25rem;
+      width: 100%;
+    }
+    .status-stack > .status-badge {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      max-width: 100%;
+    }
+
+    .paused-timer {
+      font-weight: 600;
+      color: #ea580c;
+    }
+
+    .paused-live-timer {
+      display: block;
+      margin-top: 2px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #ea580c;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .paused-total-note {
+      margin-top: 2px;
+      font-size: 0.72rem;
+      color: #ea580c;
+      font-weight: 600;
+    }
+
+    /* Team selector strip stays compact at the bottom of the table card */
+    .team-bar {
+      flex-shrink: 0;
+    }
+
+    /* Empty table state */
+    .table-empty-row td {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #94a3b8;
+    }
+
+    /* ---- Reassign modal: same searchable, avatar-list style as the employee page ---- */
+    .reassign-user-list {
+      max-height: 320px;
+      overflow-y: auto;
+    }
+    .reassign-user-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      border-radius: 0.75rem;
+      border: 1px solid #e5e7eb;
+      cursor: pointer;
+      margin-bottom: 0.375rem;
+      transition: all 0.15s;
+    }
+    .reassign-user-item:hover {
+      border-color: #c4b5fd;
+      background: #faf5ff;
+    }
+    .reassign-user-item.selected {
+      border-color: #8b5cf6;
+      background: #f5f3ff;
+    }
+    .reassign-user-avatar {
+      width: 2.25rem;
+      height: 2.25rem;
+      border-radius: 50%;
+      background: #ede9fe;
+      color: #7c3aed;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.875rem;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .reassign-user-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .reassign-radio {
+      width: 1rem;
+      height: 1rem;
+      border-radius: 50%;
+      border: 2px solid #d1d5db;
+      flex-shrink: 0;
+    }
+    .reassign-user-item.selected .reassign-radio {
+      background: #8b5cf6;
+      border-color: #8b5cf6;
+    }
+  </style>
+</head>
+<body>
+  <!-- Mobile Menu Toggle -->
+  <button id="mobileMenuToggle" class="mobile-menu-toggle">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+
+  <!-- Mobile Backdrop -->
+  <div id="mobileBackdrop" class="mobile-backdrop"></div>
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="sidebar">
+    <!-- Logo -->
+    <div class="sidebar-header">
+      <a href="/" class="sidebar-logo">
+        <div class="logo-box">
+          <span id="logoInitials">HA</span>
+        </div>
+        <span id="sidebarCompanyName" class="company-name">HAEGL</span>
+      </a>
+      <button id="collapseBtn" class="collapse-btn" title="Collapse sidebar">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Role Badge -->
+    <div class="role-badge">
+      <div class="role-dot"></div>
+      <span>Admin / Manager</span>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+      <a href="/admin/worklog/" class="nav-link active">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="3" y1="9" x2="21" y2="9"></line>
+          <line x1="9" y1="21" x2="9" y2="9"></line>
+        </svg>
+        <span>Work Log</span>
+        <div class="active-indicator"></div>
+      </a>
+      <a href="/admin/chat/" class="nav-link">
+        <div class="relative">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span id="chatBadge" class="chat-badge hidden">0</span>
+        </div>
+        <span>Chat</span>
+      </a>
+      <a href="/admin/employees/" class="nav-link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        <span>Employees</span>
+      </a>
+      <a href="/admin/analytics/" class="nav-link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="20" x2="18" y2="10"></line>
+          <line x1="12" y1="20" x2="12" y2="4"></line>
+          <line x1="6" y1="20" x2="6" y2="14"></line>
+        </svg>
+        <span>Analytics</span>
+      </a>
+      <a href="/admin/profile/" class="nav-link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        <span>Profile</span>
+      </a>
+      <!-- FIX: this previously pointed at /employee/attendance/, whose
+           requireEmployee() check rejects a logged-in admin and bounces
+           them straight back — which looked like "clicking Attendance
+           does nothing / redirects to Work Log". Admins have their own
+           attendance page at /admin/attendance/. -->
+      <a href="/admin/attendance/" class="nav-link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+          <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+        <span>Attendance</span>
+      </a>
+    </nav>
+
+    <!-- Footer -->
+    <div class="sidebar-footer">
+      <button onclick="handleLogout()" class="logout-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        <span>Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="content-wrapper">
+      <!-- Header Card -->
+      <div class="header-card">
+        <div class="header-bg"></div>
+        <div class="header-content">
+          <div class="header-top">
+            <div class="header-left">
+              <p class="company-label" id="companyLabel">HAEGL · ADMIN CONSOLE</p>
+              <div class="greeting-section">
+                <span class="greeting-emoji" id="greetingEmoji">☀️</span>
+                <h1 class="greeting-text" id="greetingText">Good afternoon, Admin!</h1>
+              </div>
+            </div>
+            <div class="header-right">
+              <div class="time-info">
+                <div class="time-badge">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  <span id="currentTime">12:00:00</span>
+                </div>
+                <span class="date-text" id="currentDate">Monday, January 1, 2024</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="header-bottom">
+            <div class="stats-badges" id="statsBadges">
+              <div class="stat-badge done">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span id="completedCount">0</span>
+                <span class="stat-label">Done</span>
+              </div>
+              <div class="stat-badge active">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span id="inProgressCount">0</span>
+                <span class="stat-label">Active</span>
+              </div>
+              <div class="stat-badge review">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <span id="pendingReviewCount">0</span>
+                <span class="stat-label">Review</span>
+              </div>
+            </div>
+            <button onclick="showAssignModal()" class="assign-task-btn" id="assignBtn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+              Assign Task
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Table Card -->
+      <div class="table-card">
+        <!-- Table Toolbar -->
+        <div class="table-toolbar">
+          <div class="toolbar-left">
+            <div class="table-dot"></div>
+            <h2 class="table-title" id="tableTitle">Work Log</h2>
+            <span class="entries-count" id="entriesCount">0</span>
+            <span class="filtered-badge hidden" id="filteredBadge">
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+              </svg>
+              Filtered
+            </span>
+          </div>
+          <div class="toolbar-right">
+            <select id="monthFilter" class="filter-select">
+              <option value="">All Months</option>
+              <option value="0">January</option>
+              <option value="1">February</option>
+              <option value="2">March</option>
+              <option value="3">April</option>
+              <option value="4">May</option>
+              <option value="5">June</option>
+              <option value="6">July</option>
+              <option value="7">August</option>
+              <option value="8">September</option>
+              <option value="9">October</option>
+              <option value="10">November</option>
+              <option value="11">December</option>
+            </select>
+            <select id="yearFilter" class="filter-select">
+              <option value="">All Years</option>
+            </select>
+            <button onclick="applyFilters()" class="apply-btn">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+              </svg>
+              Apply
+            </button>
+            <button onclick="clearFilters()" class="clear-btn hidden" id="clearFiltersBtn">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                <path d="M3 3v5h5"></path>
+              </svg>
+              Clear
+            </button>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-scroll-wrapper">
+          <div class="scroll-fade scroll-fade-left" id="scrollFadeLeft"></div>
+          <div class="table-container" id="tableContainer">
+            <table class="worklog-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Project</th>
+                  <th>Task</th>
+                  <th>Planned</th>
+                  <th>Start</th>
+                  <th>End / Timer</th>
+                  <th>Actual</th>
+                  <th>Result</th>
+                  <th>Status</th>
+                  <th>Remark</th>
+                  <th>Review</th>
+                  <th>Comment</th>
+                  <th>Reassigned</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="entriesBody">
+                <tr>
+                  <td colspan="14" class="loading-cell">Loading entries...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="scroll-fade scroll-fade-right" id="scrollFadeRight"></div>
+        </div>
+
+        <!-- Team Bar -->
+        <div class="team-bar">
+          <div class="team-bar-bg"></div>
+          <div class="team-bar-content">
+            <div class="team-label">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              <span>Team</span>
+            </div>
+            <div id="teamChips" class="team-chips">
+              <span class="loading-text">Loading team...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Assign Task Modal -->
+  <div id="assignModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+          Assign Task
+        </h2>
+        <button onclick="hideAssignModal()" class="modal-close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <form id="assignForm" class="modal-body">
+        <div class="form-group">
+          <label>Project Name</label>
+          <input type="text" id="assignProject" class="input" placeholder="e.g., WorkTrack ERP" required>
+        </div>
+        <div class="form-group">
+          <label>Task Description</label>
+          <textarea id="assignTask" class="textarea" rows="3" placeholder="Describe the task..." required></textarea>
+        </div>
+        <div class="form-group">
+          <label>Planned Time</label>
+          <div class="wheel-picker-row">
+            <div class="wheel-col" id="assign-hours-col">
+              <div class="wheel-highlight"></div>
+              <div class="wheel-col-scroll no-scrollbar" id="assign-hours-scroll"></div>
+            </div>
+            <span style="font-size: 1.5rem; font-weight: 800; color: #d1d5db; margin-top: -4px;">:</span>
+            <div class="wheel-col" id="assign-minutes-col">
+              <div class="wheel-highlight"></div>
+              <div class="wheel-col-scroll no-scrollbar" id="assign-minutes-scroll"></div>
+            </div>
+          </div>
+          <div class="wheel-labels">
+            <span>Hrs</span>
+            <span>Min</span>
+          </div>
+          <p id="assign-planned-preview" class="planned-preview"></p>
+        </div>
+        <div class="form-group">
+          <label>Deadline (Optional)</label>
+          <input type="date" id="assignDeadline" class="input">
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="submit-btn" id="assignSubmitBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+            Assign Task
+          </button>
+          <button type="button" onclick="hideAssignModal()" class="cancel-btn">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Reassign Entry Modal (same style/copy as the employee "Reassign to Colleague" modal) -->
+  <div id="reassignModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2">
+            <polyline points="17 1 21 5 17 9"></polyline>
+            <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+            <polyline points="7 23 3 19 7 15"></polyline>
+            <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+          </svg>
+          Reassign to Employee
+        </h2>
+        <button onclick="hideReassignModal()" class="modal-close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p id="reassignProjectName" style="font-size:0.75rem;color:#64748b;margin:0 0 0.75rem;font-weight:600;"></p>
+        <input type="text" id="reassignSearch" class="input" placeholder="Search employee..." style="margin-bottom:0.75rem;">
+        <div id="reassignUserList" class="reassign-user-list"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="reassignSubmitBtn" class="submit-btn" disabled>Reassign</button>
+        <button type="button" onclick="hideReassignModal()" class="cancel-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/auth.js"></script>
+  <script src="/static/js/chat-notifications-widget.js"></script>
+  <script src="/static/js/utils.js"></script>
+  <script>
+    // Authentication check
+    requireAdmin();
+
+    // The year the company / WorkTrack itself started using the app.
+    // The year filter dropdown always starts from this year and keeps
+    // extending forward automatically as later years arrive.
+    const START_YEAR = 2026;
+
+    // State
+    let employees = [];
+    let selectedEmployee = null;
+    let entries = [];
+    let filteredEntries = [];
+    let allEmployees = [];
+    let commentMap = {};
+    let now = Date.now();
+    let appliedMonth = '';
+    let appliedYear = '';
+    let currentUser = null;
+
+    // Wheel picker state for Assign Task modal
+    const HOURS = Array.from({ length: 24 }, (_, i) => i);
+    const MINUTES = Array.from({ length: 12 }, (_, i) => i * 5);
+    const ITEM_H = 40;
+    let assignHours = 0;
+    let assignMinutes = 0;
+
+    // ===== Task cell click-to-preview popover =====
+    let activeTaskPopover = null;
+    let activeTaskCell = null;
+
+    function closeTaskPopover() {
+      if (activeTaskPopover) {
+        activeTaskPopover.remove();
+        activeTaskPopover = null;
+      }
+      if (activeTaskCell) {
+        activeTaskCell.classList.remove('task-cell-active');
+        activeTaskCell = null;
+      }
+    }
+
+    function openTaskPopover(cellEl, text) {
+      const rect = cellEl.getBoundingClientRect();
+      const popover = document.createElement('div');
+      popover.className = 'task-popover';
+      popover.textContent = text;
+      document.body.appendChild(popover);
+
+      const popoverWidth = Math.min(320, window.innerWidth - 24);
+      popover.style.width = popoverWidth + 'px';
+
+      let left = rect.left;
+      if (left + popoverWidth > window.innerWidth - 12) left = window.innerWidth - popoverWidth - 12;
+      if (left < 12) left = 12;
+
+      let top = rect.bottom + 8;
+      const popoverHeight = popover.offsetHeight;
+      if (top + popoverHeight > window.innerHeight - 12) {
+        top = rect.top - popoverHeight - 8;
+        popover.classList.add('arrow-bottom');
+        if (top < 12) top = 12;
+      }
+
+      popover.style.top = top + 'px';
+      popover.style.left = left + 'px';
+
+      requestAnimationFrame(() => popover.classList.add('show'));
+
+      cellEl.classList.add('task-cell-active');
+      activeTaskPopover = popover;
+      activeTaskCell = cellEl;
+    }
+
+    // Called from the Task cell's own onclick. Clicking the same cell
+    // again closes it; clicking a different Task cell swaps to that one.
+    function handleTaskCellClick(cellEl) {
+      if (activeTaskCell === cellEl) {
+        closeTaskPopover();
+        return;
+      }
+      const id = parseInt(cellEl.dataset.taskId, 10);
+      const entry = filteredEntries.find(e => e.id === id) || entries.find(e => e.id === id);
+      closeTaskPopover();
+      if (!entry) return;
+      openTaskPopover(cellEl, entry.task_done);
+    }
+
+    // ===== Remark/Comment cell click-to-preview popover =====
+    function handleRemarkCellClick(cellEl) {
+      if (activeTaskCell === cellEl) {
+        closeTaskPopover();
+        return;
+      }
+      const id = parseInt(cellEl.dataset.remarkId, 10);
+      const entry = filteredEntries.find(e => e.id === id) || entries.find(e => e.id === id);
+      closeTaskPopover();
+      if (!entry || !entry.remark) return;
+      openTaskPopover(cellEl, entry.remark);
+    }
+
+    function handleAdminCommentCellClick(cellEl) {
+      if (activeTaskCell === cellEl) {
+        closeTaskPopover();
+        return;
+      }
+      const id = parseInt(cellEl.dataset.commentId, 10);
+      const entry = filteredEntries.find(e => e.id === id) || entries.find(e => e.id === id);
+      closeTaskPopover();
+      if (!entry || !entry.admin_comment) return;
+      openTaskPopover(cellEl, entry.admin_comment);
+    }
+
+    // Click anywhere outside an open popover (and outside the cell that
+    // opened it — that click is already handled above) closes it.
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('.task-clickable') ||
+          e.target.closest('.remark-clickable') ||
+          e.target.closest('.comment-clickable')) return;
+      if (activeTaskPopover && !activeTaskPopover.contains(e.target)) {
+        closeTaskPopover();
+      }
+    });
+
+    // ===== Mobile scroll-edge fade for the table wrapper =====
+    function setupScrollFade() {
+      const container = document.getElementById('tableContainer');
+      const fadeLeft = document.getElementById('scrollFadeLeft');
+      const fadeRight = document.getElementById('scrollFadeRight');
+      if (!container || !fadeLeft || !fadeRight) return;
+
+      function update() {
+        const maxScroll = container.scrollWidth - container.clientWidth;
+        if (maxScroll <= 2) {
+          fadeLeft.classList.remove('visible');
+          fadeRight.classList.remove('visible');
+          return;
+        }
+        fadeLeft.classList.toggle('visible', container.scrollLeft > 4);
+        fadeRight.classList.toggle('visible', container.scrollLeft < maxScroll - 4);
+      }
+
+      container.addEventListener('scroll', () => {
+        update();
+        closeTaskPopover();
+      }, { passive: true });
+      window.addEventListener('resize', () => {
+        update();
+        closeTaskPopover();
+      });
+
+      // Table rows are re-rendered on filter/employee changes, which can
+      // change scrollWidth — recheck whenever the body's content changes.
+      const observer = new MutationObserver(update);
+      observer.observe(container, { childList: true, subtree: true });
+
+      update();
+    }
+
+    // Get current user
+    try {
+      currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    } catch {
+      currentUser = {};
+    }
+
+    // Populate the year filter dropdown starting from START_YEAR through
+    // the current year (so it always shows at least 2026 → this year,
+    // even before any entries exist), extending to cover any older or
+    // newer years actually present in the loaded entries.
+    function renderYearOptions() {
+      const currentYear = new Date().getFullYear();
+      const entryYears = entries.map(e => new Date(e.date).getFullYear()).filter(y => !isNaN(y));
+      const allYears = [START_YEAR, currentYear, ...entryYears];
+      const maxYear = Math.max(...allYears);
+      const minYear = Math.min(...allYears);
+
+      const years = [];
+      for (let y = maxYear; y >= minYear; y--) years.push(y);
+
+      const sel = document.getElementById('yearFilter');
+      const prevValue = sel.value;
+      sel.innerHTML = '<option value="">All Years</option>' + years.map(y => `<option value="${y}">${y}</option>`).join('');
+      sel.value = prevValue;
+    }
+
+    // Wheel picker functions
+    function buildWheel(scrollEl, options, selected, onSelect) {
+      scrollEl.innerHTML = '';
+      scrollEl.style.paddingTop = ITEM_H + 'px';
+      scrollEl.style.paddingBottom = ITEM_H + 'px';
+      scrollEl.style.scrollSnapType = 'y mandatory';
+
+      options.forEach((opt, idx) => {
+        const item = document.createElement('div');
+        item.className = 'wheel-item' + (opt === selected ? ' selected' : '');
+        item.textContent = String(opt).padStart(2, '0');
+        item.style.scrollSnapAlign = 'center';
+        item.style.height = ITEM_H + 'px';
+        item.addEventListener('click', () => {
+          onSelect(opt);
+          scrollEl.scrollTo({ top: idx * ITEM_H, behavior: 'smooth' });
+        });
+        scrollEl.appendChild(item);
+      });
+
+      const idx = options.indexOf(selected);
+      if (idx >= 0) scrollEl.scrollTop = idx * ITEM_H;
+
+      let timeout = null;
+      scrollEl.onscroll = () => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+          const i = Math.round(scrollEl.scrollTop / ITEM_H);
+          const clamped = Math.max(0, Math.min(options.length - 1, i));
+          scrollEl.scrollTo({ top: clamped * ITEM_H, behavior: 'smooth' });
+          onSelect(options[clamped]);
+        }, 120);
+      };
+    }
+
+    function refreshWheelSelection(scrollEl, options, selected) {
+      [...scrollEl.children].forEach((child, idx) => {
+        child.classList.toggle('selected', options[idx] === selected);
+      });
+    }
+
+    function initAssignWheel() {
+      buildWheel(document.getElementById('assign-hours-scroll'), HOURS, assignHours, v => {
+        assignHours = v;
+        refreshWheelSelection(document.getElementById('assign-hours-scroll'), HOURS, assignHours);
+        syncAssignPlannedPreview();
+      });
+      buildWheel(document.getElementById('assign-minutes-scroll'), MINUTES, assignMinutes, v => {
+        assignMinutes = v;
+        refreshWheelSelection(document.getElementById('assign-minutes-scroll'), MINUTES, assignMinutes);
+        syncAssignPlannedPreview();
+      });
+    }
+
+    function setAssignWheelFromMinutes(mins) {
+      const safe = Number.isFinite(mins) && mins > 0 ? mins : 0;
+      assignHours = Math.floor(safe / 60);
+      assignMinutes = safe % 60;
+      const hScroll = document.getElementById('assign-hours-scroll');
+      const mScroll = document.getElementById('assign-minutes-scroll');
+      const hIdx = HOURS.indexOf(assignHours), mIdx = MINUTES.indexOf(assignMinutes);
+      if (hIdx >= 0) hScroll.scrollTop = hIdx * ITEM_H;
+      if (mIdx >= 0) mScroll.scrollTop = mIdx * ITEM_H;
+      refreshWheelSelection(hScroll, HOURS, assignHours);
+      refreshWheelSelection(mScroll, MINUTES, assignMinutes);
+      syncAssignPlannedPreview();
+    }
+
+    function syncAssignPlannedPreview() {
+      const total = assignHours * 60 + assignMinutes;
+      document.getElementById('assign-planned-preview').textContent = total > 0 ? `≈ ${formatMinutes(total)}` : '';
+    }
+
+    // Show 2026 → current year in the year filter immediately, even
+    // before any employee/entries data has loaded.
+    renderYearOptions();
+
+    // Initialize
+    Promise.all([getAdminEmployees(), getAllEmployeesForReassign()]).then(([empData, allEmp]) => {
+      if (Array.isArray(empData) && empData.length > 0) {
+        employees = empData;
+        selectedEmployee = empData[0];
+      }
+      if (Array.isArray(allEmp)) allEmployees = allEmp;
+      renderAll();
+      // Initialize assign task wheel picker
+      initAssignWheel();
+      // Initialize mobile scroll-edge fade
+      setupScrollFade();
+    });
+
+    // Update time every second — only the clock and live timers refresh;
+    // the table itself is NOT re-rendered here, so typing in the comment
+    // box is never interrupted.
+    setInterval(() => {
+      now = Date.now();
+      updateTimeDisplay();
+      tickLiveTimers();
+    }, 1000);
+
+    // ── Mirrors the backend's auto-stop cutoff (views.py:
+    // AUTO_STOP_HOUR / AUTO_STOP_MINUTE / AUTO_STOP_TIMEZONE) so the
+    // live "paused so far" counter freezes at 7 PM in the browser
+    // immediately, instead of continuing to tick until the page is
+    // reloaded and the backend's own auto-stop catches up. If the
+    // backend constant changes, update these two numbers to match. ──
+    const AUTO_STOP_HOUR = 19;   // 7 PM, 24-hour clock
+    const AUTO_STOP_MINUTE = 0;
+    const AUTO_STOP_TZ_OFFSET_MIN = 5 * 60 + 30; // fixed UTC+5:30 (IST), same as backend
+
+    // Returns the epoch-ms timestamp for 7:00 PM IST on the given
+    // 'YYYY-MM-DD' entry date — the same cutoff instant the backend
+    // uses to auto-complete overdue entries.
+    function getAutoStopCutoffMs(dateStr) {
+      if (!dateStr) return Infinity;
+      const [y, m, d] = dateStr.split('-').map(Number);
+      if (!y || !m || !d) return Infinity;
+      return Date.UTC(y, m - 1, d, AUTO_STOP_HOUR, AUTO_STOP_MINUTE, 0) - AUTO_STOP_TZ_OFFSET_MIN * 60000;
+    }
+
+    // Update the live "in progress" timers in place, without touching
+    // the rest of the table (keeps focus in text inputs intact)
+    function tickLiveTimers() {
+      document.querySelectorAll('.live-timer').forEach(el => {
+        const start = new Date(el.dataset.start).getTime();
+        const accumulated = parseInt(el.dataset.accumulated || '0', 10) * 60000;
+        const cutoffMs = getAutoStopCutoffMs(el.dataset.entryDate);
+        const effectiveNow = Math.min(now, cutoffMs);
+        el.textContent = formatElapsed(Math.max(0, effectiveNow - start) + accumulated);
+      });
+      // Live "time paused so far" counter — continues from the running
+      // total across earlier pauses on this same entry, until Resume.
+      // Capped at the 7 PM auto-stop cutoff for that entry's date, so
+      // a forgotten paused entry visually stops counting at 7 PM
+      // instead of ticking all night — matching what the backend will
+      // do to the entry (auto-complete it) the next time it's fetched.
+      document.querySelectorAll('.paused-live-timer').forEach(el => {
+        const pausedStartStr = el.dataset.pausedStart;
+        if (!pausedStartStr) return;
+        const pausedStart = new Date(pausedStartStr).getTime();
+        const totalPausedMs = parseInt(el.dataset.totalPaused || '0', 10) * 1000;
+        const cutoffMs = getAutoStopCutoffMs(el.dataset.entryDate);
+        const effectiveNow = Math.min(now, cutoffMs);
+        const elapsed = Math.max(0, effectiveNow - pausedStart) + totalPausedMs;
+        el.textContent = '⏱ ' + formatElapsed(elapsed);
+      });
+    }
+
+    // Update time display
+    function updateTimeDisplay() {
+      const n = new Date();
+      document.getElementById('currentTime').textContent = n.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      document.getElementById('currentDate').textContent = n.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+      const hour = n.getHours();
+      let greeting, emoji;
+      if (hour < 12) {
+        greeting = 'Good morning';
+        emoji = '🌅';
+      } else if (hour < 17) {
+        greeting = 'Good afternoon';
+        emoji = '☀️';
+      } else {
+        greeting = 'Good evening';
+        emoji = '🌙';
+      }
+
+      const name = currentUser?.first_name || currentUser?.full_name?.split(' ')[0] || 'Admin';
+      document.getElementById('greetingText').textContent = `${greeting}, ${name}!`;
+      document.getElementById('greetingEmoji').textContent = emoji;
+    }
+
+    // Render all
+    function renderAll() {
+      renderTeamBar();
+      loadEntries();
+      updateTimeDisplay();
+    }
+
+    // Render team bar
+    function renderTeamBar() {
+      const container = document.getElementById('teamChips');
+      const companyName = localStorage.getItem('company_name') || 'HAEGL';
+
+      container.innerHTML = employees.map(emp => `
+        <div class="team-chip ${selectedEmployee?.id === emp.id ? 'active' : ''}" onclick="selectEmployee(${emp.id})">
+          <div class="chip-avatar">
+            ${emp.profile?.photo ? `
+              <img src="${emp.profile.photo}" alt="${emp.first_name}">
+            ` : `
+              <span class="avatar-initials">${emp.first_name?.[0]}${emp.last_name?.[0]}</span>
+            `}
+          </div>
+          ${emp.first_name}
+        </div>
+      `).join('');
+
+      // Update company name displays
+      document.getElementById('companyLabel').textContent = `${companyName} · ADMIN CONSOLE`;
+      document.getElementById('sidebarCompanyName').textContent = companyName;
+      document.getElementById('logoInitials').textContent = companyName.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+    }
+
+    // Select employee
+    function selectEmployee(empId) {
+      selectedEmployee = employees.find(e => e.id === empId);
+      commentMap = {};
+      clearFilters();
+      renderAll();
+    }
+
+    // Load entries
+    async function loadEntries() {
+      if (!selectedEmployee) return;
+      const data = await getEmployeeEntries(selectedEmployee.id);
+      if (Array.isArray(data)) {
+        entries = data;
+        renderYearOptions();
+        applyFilters();
+      }
+    }
+
+    // Apply filters
+    function applyFilters() {
+      const month = parseInt(document.getElementById('monthFilter').value);
+      const year = parseInt(document.getElementById('yearFilter').value);
+
+      filteredEntries = entries.filter(entry => {
+        const d = new Date(entry.date);
+        return (isNaN(month) || d.getMonth() === month) &&
+               (isNaN(year) || d.getFullYear() === year);
+      });
+
+      appliedMonth = document.getElementById('monthFilter').value;
+      appliedYear = document.getElementById('yearFilter').value;
+
+      renderEntries();
+      updateStats();
+    }
+
+    // Clear filters
+    function clearFilters() {
+      document.getElementById('monthFilter').value = '';
+      document.getElementById('yearFilter').value = '';
+      appliedMonth = '';
+      appliedYear = '';
+      filteredEntries = [...entries];
+      renderEntries();
+      updateStats();
+    }
+
+    // Render entries
+    function renderEntries() {
+      const tbody = document.getElementById('entriesBody');
+
+      // Any open task popover refers to a cell that's about to be
+      // replaced — close it before re-rendering.
+      closeTaskPopover();
+
+      if (filteredEntries.length === 0) {
+        tbody.innerHTML = `
+          <tr class="table-empty-row">
+            <td colspan="14">
+              <div class="empty-state">
+                <div class="empty-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                  </svg>
+                </div>
+                <p class="empty-title">${appliedMonth !== '' || appliedYear !== '' ? 'No entries match this filter' : 'No entries yet'}</p>
+                <p class="empty-desc">${appliedMonth !== '' || appliedYear !== '' ? 'Try a different month or year' : `${selectedEmployee?.first_name} has not logged any work yet`}</p>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filteredEntries.map(entry => {
+        const cmp = entry.status === 'completed' && !entry.is_reassigned ? compareTime(entry.planned_minutes, entry.actual_minutes) : null;
+
+        return `
+          <tr class="table-row">
+            <td class="nowrap-cell" style="font-weight:700;color:#1e293b;">${entry.date}</td>
+            <td class="nowrap-cell">
+              <div class="project-cell">
+                <span class="project-dot"></span>
+                ${entry.project_name}
+              </div>
+            </td>
+            <td><p class="task-text task-clickable" data-task-id="${entry.id}" onclick="handleTaskCellClick(this)">${entry.task_done}</p></td>
+            <td class="nowrap-cell time-cell">${formatMinutes(entry.planned_minutes)}</td>
+            <!-- START COLUMN FIX: shows original_start_time (set once, on the
+                 very first Start, and never overwritten by resume) instead of
+                 start_time (which the backend resets to "now" on every
+                 resume). Falls back to start_time for any existing entries
+                 created before this field existed. -->
+            <td class="nowrap-cell time-cell">${formatClockTime(entry.original_start_time || entry.start_time)}</td>
+            <td class="nowrap-cell">
+              ${entry.status === 'in_progress' && entry.start_time ? `
+                <span class="live-timer" data-start="${entry.start_time}" data-accumulated="${entry.accumulated_minutes || 0}" data-entry-date="${entry.date}">${formatElapsed(now - new Date(entry.start_time).getTime() + (entry.accumulated_minutes || 0) * 60000)}</span>
+                ${entry.total_paused_seconds > 0 ? `<div class="paused-total-note">⏸ Paused ${formatSeconds(entry.total_paused_seconds)}</div>` : ''}
+              ` : entry.status === 'paused' ? `
+                <span class="paused-timer">⏸ ${formatMinutes(entry.accumulated_minutes || 0)}</span>
+                <span class="paused-live-timer" data-paused-start="${entry.paused_at || ''}" data-total-paused="${entry.total_paused_seconds || 0}" data-entry-date="${entry.date}">⏱ --:--:--</span>
+              ` : entry.end_time ? `<span class="time-cell">${formatClockTime(entry.end_time)}</span>` : '<span class="no-time-cell">—</span>'}
+            </td>
+            <td class="nowrap-cell time-cell">${entry.actual_minutes !== null && entry.actual_minutes !== undefined ? formatMinutes(entry.actual_minutes) : '—'}</td>
+            <td class="nowrap-cell">
+              ${entry.is_reassigned ? `
+                <span class="result-badge reassigned">↗ Passed On</span>
+              ` : cmp ? `
+                <span class="result-badge ${cmp.label === 'Early' ? 'early' : cmp.label === 'Overtime' ? 'overtime' : 'ontime'}">
+                  ${cmp.label}${cmp.value > 0 ? ` (${formatMinutes(cmp.value)})` : ''}
+                </span>
+                ${entry.total_paused_seconds > 0 ? `<div class="paused-total-note">⏸ Paused ${formatSeconds(entry.total_paused_seconds)}</div>` : ''}
+              ` : '<span class="no-time-cell">—</span>'}
+            </td>
+            <td class="nowrap-cell">
+              <div class="status-stack">
+                <span class="status-badge ${
+                  entry.status === 'not_started' ? 'not-started' :
+                  entry.status === 'in_progress' ? 'in-progress' :
+                  entry.status === 'paused' ? 'paused' :
+                  'completed'
+                }">
+                  <span class="status-icon">${entry.status === 'not_started' ? '○' : entry.status === 'in_progress' ? '◑' : entry.status === 'paused' ? '⏸' : '●'}</span>
+                  ${entry.status === 'not_started' ? 'Not Started' : entry.status === 'in_progress' ? 'In Progress' : entry.status === 'paused' ? 'Paused' : 'Completed'}
+                </span>
+                ${entry.is_manual_entry ? `<span class="status-badge" style="background:#fef3c7;color:#b45309;border:1px solid #fde68a;">🖊️ Manual</span>` : ''}
+              </div>
+            </td>
+            <td>${entry.remark ? `<p class="task-text remark-clickable" data-remark-id="${entry.id}" onclick="handleRemarkCellClick(this)">${entry.remark}</p>` : '<p class="task-text">—</p>'}</td>
+            <td class="nowrap-cell">
+              <span class="review-badge ${
+                entry.review_status === 'pending' ? 'pending' :
+                entry.review_status === 'approved' ? 'approved' :
+                'rejected'
+              }">
+                ${entry.review_status === 'pending' ? 'Pending' : entry.review_status === 'approved' ? 'Approved' : 'Rejected'}
+              </span>
+            </td>
+            <td>
+              <input
+                type="text"
+                class="comment-input"
+                data-entry-id="${entry.id}"
+                value="${commentMap[entry.id] ?? entry.admin_comment ?? ''}"
+                placeholder="Add comment..."
+                oninput="updateCommentMap(${entry.id}, this.value)"
+              />
+              <p class="comment-hint">✓ approve · ✗ reject to save</p>
+            </td>
+            <td class="reassigned-cell nowrap-cell">
+              ${entry.is_reassigned ? (
+                entry.reassigned_to ? `<span class="reassigned-text">→ ${entry.reassigned_to}</span>` :
+                entry.reassigned_from ? `<span class="reassigned-text">← ${entry.reassigned_from}</span>` :
+                '<span class="reassigned-text">Yes</span>'
+              ) : '<span class="no-time-cell">—</span>'}
+            </td>
+            <td class="nowrap-cell">
+              <div class="action-buttons">
+                ${entry.status === 'in_progress' ? `
+                <button onclick="pauseEntry(${entry.id})" class="action-btn pause" title="Pause">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                    <rect x="6" y="4" width="4" height="16"></rect>
+                    <rect x="14" y="4" width="4" height="16"></rect>
+                  </svg>
+                </button>
+                ` : ''}
+                ${entry.status === 'paused' ? `
+                <button onclick="resumeEntry(${entry.id})" class="action-btn resume" title="Resume">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                    <polygon points="6 3 20 12 6 21 6 3"></polygon>
+                  </svg>
+                </button>
+                ` : ''}
+                <button onclick="reviewEntry(${entry.id}, 'approved')" class="action-btn approve" title="Approve">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
+                </button>
+                <button onclick="reviewEntry(${entry.id}, 'rejected')" class="action-btn reject" title="Reject">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                  </svg>
+                </button>
+                <button onclick="showReassignModal(${entry.id})" class="action-btn reassign" title="Reassign">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="17 1 21 5 17 9"></polyline>
+                    <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+                    <polyline points="7 23 3 19 7 15"></polyline>
+                    <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      tickLiveTimers();
+    }
+
+    // Update stats
+    function updateStats() {
+      const completedCount = filteredEntries.filter(e => e.status === 'completed').length;
+      const inProgressCount = filteredEntries.filter(e => e.status === 'in_progress').length;
+      const pendingReview = filteredEntries.filter(e => e.review_status === 'pending').length;
+
+      document.getElementById('completedCount').textContent = completedCount;
+      document.getElementById('inProgressCount').textContent = inProgressCount;
+      document.getElementById('pendingReviewCount').textContent = pendingReview;
+      document.getElementById('entriesCount').textContent = filteredEntries.length;
+      document.getElementById('tableTitle').textContent = selectedEmployee ? `${selectedEmployee.first_name}'s Work Log` : 'Work Log';
+
+      const clearBtn = document.getElementById('clearFiltersBtn');
+      const filteredBadge = document.getElementById('filteredBadge');
+      if (appliedMonth !== '' || appliedYear !== '') {
+        clearBtn.classList.remove('hidden');
+        filteredBadge.classList.remove('hidden');
+      } else {
+        clearBtn.classList.add('hidden');
+        filteredBadge.classList.add('hidden');
+      }
+    }
+
+    // Review entry
+    async function reviewEntry(entryId, status) {
+      const comment = commentMap[entryId] || '';
+      const data = await reviewWorkEntry(entryId, status, comment);
+
+      if (data.id) {
+        entries = entries.map(e => e.id === entryId ? data : e);
+        applyFilters();
+        showToast(status === 'approved' ? 'Entry approved!' : 'Entry rejected', 'success');
+        // Clear comment after review
+        delete commentMap[entryId];
+      }
+    }
+
+    // Pause an in-progress entry
+    async function pauseEntry(entryId) {
+      try {
+        const data = await pauseWorkEntryAdmin(entryId, 'pause');
+        if (data && data.id) {
+          entries = entries.map(e => e.id === entryId ? data : e);
+          applyFilters();
+          showToast('Entry paused', 'success');
+        } else {
+          showToast((data && data.error) || 'Failed to pause entry', 'error');
+        }
+      } catch (err) {
+        console.error('pauseEntry error:', err);
+        showToast('Failed to pause entry', 'error');
+      }
+    }
+
+    // Resume a paused entry
+    async function resumeEntry(entryId) {
+      try {
+        const data = await pauseWorkEntryAdmin(entryId, 'resume');
+        if (data && data.id) {
+          entries = entries.map(e => e.id === entryId ? data : e);
+          applyFilters();
+          showToast('Entry resumed', 'success');
+        } else {
+          showToast((data && data.error) || 'Failed to resume entry', 'error');
+        }
+      } catch (err) {
+        console.error('resumeEntry error:', err);
+        showToast('Failed to resume entry', 'error');
+      }
+    }
+
+    // Update comment map
+    function updateCommentMap(entryId, value) {
+      commentMap[entryId] = value;
+    }
+
+    // Compare time
+    function compareTime(plannedMin, actualMin) {
+      const diff = plannedMin - actualMin;
+      if (diff > 0) return { label: 'Early', value: diff };
+      if (diff < 0) return { label: 'Overtime', value: -diff };
+      return { label: 'On Time', value: 0 };
+    }
+
+    // Format minutes
+    function formatMinutes(mins) {
+      if (mins === null || mins === undefined || isNaN(mins)) return '—';
+      const m = Math.round(mins);
+      const h = Math.floor(m / 60);
+      const rem = m % 60;
+      if (h === 0) return `${rem}m`;
+      if (rem === 0) return `${h}h`;
+      return `${h}h ${rem}m`;
+    }
+
+    // Format a total-paused-seconds value the same way, for the Result column note
+    function formatSeconds(totalSeconds) {
+      if (!totalSeconds) return '0m';
+      return formatMinutes(Math.round(totalSeconds / 60));
+    }
+
+    // Format elapsed time
+    function formatElapsed(ms) {
+      const totalSec = Math.max(0, Math.floor(ms / 1000));
+      const h = Math.floor(totalSec / 3600);
+      const min = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+      return [h, min, s].map(v => String(v).padStart(2, '0')).join(':');
+    }
+
+    // Format clock time
+    function formatClockTime(iso) {
+      if (!iso) return '—';
+      return new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // Assign modal
+    function showAssignModal() {
+      if (!selectedEmployee) {
+        showToast('Please select an employee first', 'error');
+        return;
+      }
+      document.getElementById('assignModal').classList.remove('hidden');
+      document.querySelector('#assignModal h2').innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+        Assign Task to ${selectedEmployee.first_name}
+      `;
+      // Reset wheel picker
+      setAssignWheelFromMinutes(0);
+    }
+
+    function hideAssignModal() {
+      document.getElementById('assignModal').classList.add('hidden');
+      document.getElementById('assignForm').reset();
+      // Reset wheel picker
+      setAssignWheelFromMinutes(0);
+    }
+
+    // ===== Reassign modal (searchable, avatar-list — same UX/copy as employee page) =====
+    let currentReassignEntryId = null;
+    let selectedReassignTarget = null;
+
+    function showReassignModal(entryId) {
+      currentReassignEntryId = entryId;
+      selectedReassignTarget = null;
+
+      const entry = filteredEntries.find(e => e.id === entryId) || entries.find(e => e.id === entryId);
+      document.getElementById('reassignProjectName').textContent = entry ? entry.project_name : '';
+      document.getElementById('reassignSearch').value = '';
+      document.getElementById('reassignSubmitBtn').disabled = true;
+      document.getElementById('reassignSubmitBtn').textContent = 'Reassign';
+
+      renderReassignList('');
+      document.getElementById('reassignModal').classList.remove('hidden');
+    }
+
+    function hideReassignModal() {
+      document.getElementById('reassignModal').classList.add('hidden');
+      currentReassignEntryId = null;
+      selectedReassignTarget = null;
+    }
+
+    function renderReassignList(search) {
+      const list = document.getElementById('reassignUserList');
+      const term = search.trim().toLowerCase();
+
+      const filteredList = allEmployees.filter(emp => {
+        if (selectedEmployee && emp.id === selectedEmployee.id) return false;
+        if (!term) return true;
+        const name = (emp.full_name || '').toLowerCase();
+        const dept = (emp.department || '').toLowerCase();
+        const role = (emp.designation || '').toLowerCase();
+        return name.includes(term) || dept.includes(term) || role.includes(term);
+      });
+
+      list.innerHTML = filteredList.map(emp => `
+        <div class="reassign-user-item ${selectedReassignTarget === emp.id ? 'selected' : ''}" data-id="${emp.id}">
+          <div class="reassign-user-avatar">
+            ${emp.photo ? `<img src="${emp.photo}" alt="${emp.full_name || ''}">` : `<span>${(emp.full_name || '?').trim()[0] || '?'}</span>`}
+          </div>
+          <div style="flex:1;min-width:0;">
+            <p style="font-size:0.875rem;font-weight:700;color:#1e293b;margin:0;">${emp.full_name || 'Unnamed'}</p>
+            <p style="font-size:0.75rem;color:#64748b;margin:0;">${[emp.designation, emp.department].filter(Boolean).join(' · ') || 'N/A'}</p>
+          </div>
+          <div class="reassign-radio"></div>
+        </div>
+      `).join('') || (term
+        ? `<p style="text-align:center;color:#94a3b8;padding:2rem 0.5rem;">No employees match "${search}"</p>`
+        : `<p style="text-align:center;color:#94a3b8;padding:2rem 0.5rem;">No employees available to reassign to</p>`);
+
+      list.querySelectorAll('.reassign-user-item').forEach(opt => {
+        opt.addEventListener('click', () => {
+          selectedReassignTarget = parseInt(opt.dataset.id, 10);
+          list.querySelectorAll('.reassign-user-item').forEach(o => o.classList.remove('selected'));
+          opt.classList.add('selected');
+          document.getElementById('reassignSubmitBtn').disabled = false;
+        });
+      });
+    }
+
+    document.getElementById('reassignSearch').addEventListener('input', (e) => renderReassignList(e.target.value));
+
+    document.getElementById('reassignSubmitBtn').addEventListener('click', async () => {
+      if (!selectedReassignTarget || !currentReassignEntryId) return;
+
+      const btn = document.getElementById('reassignSubmitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Reassigning...';
+
+      const data = await reassignWorkEntry(currentReassignEntryId, selectedReassignTarget);
+
+      if (data.id || data.message) {
+        const targetEmp = allEmployees.find(emp => emp.id === selectedReassignTarget);
+        showToast(`Entry reassigned to ${targetEmp?.first_name || 'employee'}!`, 'success');
+        hideReassignModal();
+        loadEntries();
+      } else {
+        showToast(data.error || 'Failed to reassign entry', 'error');
+        btn.disabled = false;
+        btn.textContent = 'Reassign';
+      }
+    });
+
+    // Close reassign modal on backdrop click
+    document.getElementById('reassignModal').addEventListener('click', (e) => {
+      if (e.target.id === 'reassignModal') {
+        hideReassignModal();
+      }
+    });
+
+    // Assign form submission
+    document.getElementById('assignForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const totalMinutes = assignHours * 60 + assignMinutes;
+      if (totalMinutes === 0) {
+        showToast('Please set planned time greater than 0', 'error');
+        return;
+      }
+
+      const submitBtn = document.getElementById('assignSubmitBtn');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spinning">
+          <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+        </svg>
+        Assigning...
+      `;
+
+      const data = await assignTask({
+        employee_id: selectedEmployee.id,
+        project_name: document.getElementById('assignProject').value,
+        task_description: document.getElementById('assignTask').value,
+        planned_minutes: totalMinutes,
+        deadline: document.getElementById('assignDeadline').value || null
+      });
+
+      if (data.id) {
+        showToast(`Task assigned to ${selectedEmployee.first_name}!`, 'success');
+        hideAssignModal();
+        loadEntries();
+      } else {
+        showToast('Failed to assign task', 'error');
+      }
+
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+        Assign Task
+      `;
+    });
+
+    // Close modal on backdrop click
+    document.getElementById('assignModal').addEventListener('click', (e) => {
+      if (e.target.id === 'assignModal') {
+        hideAssignModal();
+      }
+    });
+
+    // Toast notification
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          ${type === 'success' ? '<polyline points="20 6 9 17 4 12"></polyline>' :
+            type === 'error' ? '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>' :
+            '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line>'}
+        </svg>
+        <span>${message}</span>
+        <button onclick="this.parentElement.remove()" class="toast-close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      `;
+
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // Mobile menu toggle
+    const mobileToggle = document.getElementById('mobileMenuToggle');
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.getElementById('mobileBackdrop');
+
+    mobileToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      backdrop.classList.toggle('show');
+    });
+
+    backdrop.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      backdrop.classList.remove('show');
+    });
+
+    // Sidebar collapse
+    const collapseBtn = document.getElementById('collapseBtn');
+    collapseBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+    });
+  </script>
+</body>
+</html>

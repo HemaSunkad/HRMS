@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile - Admin - WorkTrack</title>
+  <link rel="icon" href="/static/assets/apple-icon.jpeg">
+  <link rel="stylesheet" href="/static/css/admin-worklog.css">
+  <link rel="stylesheet" href="/static/css/responsive.css">
+  <style>
+    .content-wrapper {
+      min-height: 100vh;
+      padding: 1.5rem;
+      box-sizing: border-box;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: stretch;
+      gap: 1.25rem;
+      max-width: 1100px;
+    }
+
+    @media (max-width: 860px) {
+      .content-wrapper {
+        grid-template-columns: 1fr;
+        max-width: 720px;
+      }
+    }
+
+    .profile-card, .password-card {
+      background: white;
+      border-radius: 1rem;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.06);
+      padding: 1.5rem;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .profile-card form, .password-card form {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    /* Pushes each card's action button to the bottom, so both cards'
+       buttons line up even though Change Password has fewer fields. */
+    .save-btn, #passwordSaveBtn {
+      margin-top: auto;
+      align-self: flex-start;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 800;
+      color: #1e293b;
+      margin: 0 0 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .photo-row {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .photo-avatar {
+      width: 4.5rem;
+      height: 4.5rem;
+      border-radius: 50%;
+      background: #ede9fe;
+      color: #7c3aed;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.25rem;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .photo-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .photo-upload-btn {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: #7c3aed;
+      background: #f5f3ff;
+      border: 1px solid #ddd6fe;
+      border-radius: 0.5rem;
+      padding: 0.5rem 0.875rem;
+      cursor: pointer;
+    }
+    .photo-upload-btn:hover { background: #ede9fe; }
+
+    .photo-remove-btn {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: #dc2626;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 0.5rem;
+      padding: 0.5rem 0.875rem;
+      cursor: pointer;
+    }
+    .photo-remove-btn:hover { background: #fee2e2; }
+    .photo-remove-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .photo-remove-btn.hidden { display: none; }
+
+    .form-row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 560px) {
+      .form-row-2 { grid-template-columns: 1fr; }
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      margin-bottom: 0.375rem;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 0.625rem 0.875rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.625rem;
+      font-size: 0.9375rem;
+      box-sizing: border-box;
+    }
+    .form-group input:focus {
+      outline: none;
+      border-color: #8b5cf6;
+    }
+    .form-group input:disabled {
+      background: #f8fafc;
+      color: #94a3b8;
+    }
+
+    .save-btn {
+      background: #7c3aed;
+      color: white;
+      border: none;
+      border-radius: 0.625rem;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.875rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .save-btn:hover { background: #6d28d9; }
+    .save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .field-hint {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- Mobile Menu Toggle -->
+  <button id="mobileMenuToggle" class="mobile-menu-toggle">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+  <div id="mobileBackdrop" class="mobile-backdrop"></div>
+
+  <!-- Sidebar (same as other admin pages) -->
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+      <a href="/" class="sidebar-logo">
+        <div class="logo-box"><span id="logoInitials">HA</span></div>
+        <span id="sidebarCompanyName" class="company-name">HAEGL</span>
+      </a>
+      <button id="collapseBtn" class="collapse-btn" title="Collapse sidebar">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      </button>
+    </div>
+
+    <div class="role-badge">
+      <div class="role-dot"></div>
+      <span>Admin / Manager</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="/admin/worklog/" class="nav-link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+        <span>Work Log</span>
+      </a>
+      <a href="/admin/chat/" class="nav-link">
+        <div class="relative">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          <span id="chatBadge" class="chat-badge hidden">0</span>
+        </div>
+        <span>Chat</span>
+      </a>
+      <a href="/admin/employees/" class="nav-link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        <span>Employees</span>
+      </a>
+      <a href="/admin/analytics/" class="nav-link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+        <span>Analytics</span>
+      </a>
+      <a href="/admin/profile/" class="nav-link active">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        <span>Profile</span>
+        <div class="active-indicator"></div>
+      </a>
+      <a href="/employee/attendance/" class="nav-link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+          <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+        <span>Attendance</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button onclick="handleLogout()" class="logout-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+        <span>Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="content-wrapper">
+
+      <!-- Profile details -->
+      <div class="profile-card">
+        <h2 class="card-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          My Profile
+        </h2>
+
+        <div class="photo-row">
+          <div class="photo-avatar" id="photoAvatar">?</div>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <input type="file" id="photoInput" accept="image/*" style="display:none;">
+            <button type="button" class="photo-upload-btn" id="photoUploadBtn">Change Photo</button>
+            <button type="button" class="photo-remove-btn hidden" id="photoRemoveBtn">Remove Photo</button>
+          </div>
+        </div>
+
+        <form id="profileForm">
+          <div class="form-row-2">
+            <div class="form-group">
+              <label>First Name</label>
+              <input type="text" id="fFirstName" required>
+            </div>
+            <div class="form-group">
+              <label>Last Name</label>
+              <input type="text" id="fLastName">
+            </div>
+          </div>
+          <div class="form-row-2">
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="fEmail" disabled>
+            </div>
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="text" id="fPhone" placeholder="e.g. +91 98765 43210">
+            </div>
+          </div>
+          <div class="form-row-2">
+            <div class="form-group">
+              <label>Department</label>
+              <input type="text" id="fDepartment">
+            </div>
+            <div class="form-group">
+              <label>Designation</label>
+              <input type="text" id="fDesignation">
+            </div>
+          </div>
+          <button type="submit" class="save-btn" id="profileSaveBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path></svg>
+            Save Changes
+          </button>
+        </form>
+      </div>
+
+      <!-- Change password -->
+      <div class="password-card">
+        <h2 class="card-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          Change Password
+        </h2>
+        <form id="passwordForm">
+          <div class="form-group">
+            <label>Current Password</label>
+            <input type="password" id="fCurrentPassword" required autocomplete="current-password">
+          </div>
+          <div class="form-group">
+            <label>New Password</label>
+            <input type="password" id="fNewPassword" required autocomplete="new-password">
+          </div>
+          <div class="form-group">
+            <label>Confirm New Password</label>
+            <input type="password" id="fConfirmPassword" required autocomplete="new-password">
+          </div>
+          <p class="field-hint">Must be at least 8 characters, with an uppercase letter, lowercase letter, number, and special character.</p>
+          <button type="submit" class="save-btn" id="passwordSaveBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            Update Password
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/auth.js"></script>
+  <script>
+    requireAdmin();
+
+    let currentPhotoFile = null;
+
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          ${type === 'success' ? '<polyline points="20 6 9 17 4 12"></polyline>' : '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>'}
+        </svg>
+        <span>${message}</span>
+        <button onclick="this.parentElement.remove()" class="toast-close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>`;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3500);
+    }
+
+    function renderAvatar(user) {
+      const avatar = document.getElementById('photoAvatar');
+      const removeBtn = document.getElementById('photoRemoveBtn');
+      const photo = user?.profile?.photo;
+      if (photo) {
+        avatar.innerHTML = `<img src="${photo}" alt="Profile photo">`;
+        removeBtn.classList.remove('hidden');
+      } else {
+        const initials = `${(user?.first_name || '?')[0] || ''}${(user?.last_name || '')[0] || ''}`.toUpperCase();
+        avatar.textContent = initials || '?';
+        removeBtn.classList.add('hidden');
+      }
+    }
+
+    // Keeps every other page's sidebar/avatar in sync: WorkTrack pages
+    // read the logged-in user's photo from the 'user' object in
+    // localStorage, so removing (or changing) the photo here needs to
+    // update that cached object too — not just this page's own DOM —
+    // otherwise other already-open tabs would keep showing the old
+    // photo until the next full login.
+    function updateStoredUser(patch) {
+      try {
+        const stored = JSON.parse(localStorage.getItem('user') || '{}');
+        const merged = { ...stored, ...patch };
+        if (patch.profile) {
+          merged.profile = { ...(stored.profile || {}), ...patch.profile };
+        }
+        localStorage.setItem('user', JSON.stringify(merged));
+      } catch {}
+    }
+
+    async function loadProfile() {
+      const user = await getMe();
+      document.getElementById('fFirstName').value = user.first_name || '';
+      document.getElementById('fLastName').value = user.last_name || '';
+      document.getElementById('fEmail').value = user.email || '';
+      document.getElementById('fPhone').value = user.profile?.phone || '';
+      document.getElementById('fDepartment').value = user.profile?.department || '';
+      document.getElementById('fDesignation').value = user.profile?.designation || '';
+      renderAvatar(user);
+      updateStoredUser(user);
+
+      const companyName = user.company_name || localStorage.getItem('company_name') || 'HAEGL';
+      document.getElementById('sidebarCompanyName').textContent = companyName;
+      document.getElementById('logoInitials').textContent = companyName.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+    }
+
+    document.getElementById('photoUploadBtn').addEventListener('click', () => {
+      document.getElementById('photoInput').click();
+    });
+    document.getElementById('photoInput').addEventListener('change', (e) => {
+      currentPhotoFile = e.target.files[0] || null;
+      if (currentPhotoFile) {
+        const avatar = document.getElementById('photoAvatar');
+        avatar.innerHTML = `<img src="${URL.createObjectURL(currentPhotoFile)}" alt="Preview">`;
+        document.getElementById('photoRemoveBtn').classList.remove('hidden');
+      }
+    });
+
+    // Removing the photo is immediate (not tied to "Save Changes") so
+    // it can't be left half-applied, and so it's reflected right away
+    // everywhere the photo is read from — this page, and the cached
+    // 'user' object in localStorage that other pages/tabs use.
+    document.getElementById('photoRemoveBtn').addEventListener('click', async () => {
+      if (!confirm('Remove your profile photo?')) return;
+      const btn = document.getElementById('photoRemoveBtn');
+      btn.disabled = true;
+
+      currentPhotoFile = null;
+      document.getElementById('photoInput').value = '';
+
+      const formData = new FormData();
+      formData.append('remove_photo', 'true');
+
+      const data = await updateProfile(formData);
+      if (data && data.id) {
+        renderAvatar(data);
+        updateStoredUser(data);
+        showToast('Profile photo removed', 'success');
+      } else {
+        showToast('Failed to remove photo', 'error');
+      }
+      btn.disabled = false;
+    });
+
+    document.getElementById('profileForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('profileSaveBtn');
+      btn.disabled = true;
+
+      const formData = new FormData();
+      formData.append('first_name', document.getElementById('fFirstName').value);
+      formData.append('last_name', document.getElementById('fLastName').value);
+      formData.append('phone', document.getElementById('fPhone').value);
+      formData.append('department', document.getElementById('fDepartment').value);
+      formData.append('designation', document.getElementById('fDesignation').value);
+      if (currentPhotoFile) formData.append('profile_picture', currentPhotoFile);
+
+      const data = await updateProfile(formData);
+      if (data && data.id) {
+        showToast('Profile updated!', 'success');
+        renderAvatar(data);
+        updateStoredUser(data);
+      } else {
+        showToast('Failed to update profile', 'error');
+      }
+      btn.disabled = false;
+    });
+
+    document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const current = document.getElementById('fCurrentPassword').value;
+      const next = document.getElementById('fNewPassword').value;
+      const confirm = document.getElementById('fConfirmPassword').value;
+
+      if (next !== confirm) {
+        showToast('New passwords do not match', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('passwordSaveBtn');
+      btn.disabled = true;
+      const data = await changePassword(current, next);
+
+      if (data && data.token) {
+        localStorage.setItem('token', data.token);
+        showToast('Password updated successfully!', 'success');
+        document.getElementById('passwordForm').reset();
+      } else {
+        showToast((data && data.error) || 'Failed to update password', 'error');
+      }
+      btn.disabled = false;
+    });
+
+    // Sidebar interactions (same as other admin pages)
+    document.getElementById('mobileMenuToggle').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('open');
+      document.getElementById('mobileBackdrop').classList.toggle('show');
+    });
+    document.getElementById('mobileBackdrop').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('mobileBackdrop').classList.remove('show');
+    });
+    document.getElementById('collapseBtn').addEventListener('click', () => {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    });
+
+    loadProfile();
+  </script>
+</body>
+</html>

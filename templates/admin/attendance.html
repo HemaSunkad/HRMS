@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendance - Admin - WorkTrack</title>
+  <link rel="icon" href="/static/assets/apple-icon.jpeg">
+  <link rel="stylesheet" href="/static/css/reset.css">
+  <link rel="stylesheet" href="/static/css/variables.css">
+  <link rel="stylesheet" href="/static/css/animations.css">
+  <link rel="stylesheet" href="/static/css/admin-worklog.css">
+  <link rel="stylesheet" href="/static/css/responsive.css">
+  <style>
+    /* ===== Page-specific additions on top of admin-worklog.css
+       (mirrors the layout approach used by admin/worklog.html, so the
+       Employee History table gets the exact same look/behavior). ===== */
+
+    .content-wrapper {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+    @media (min-width: 1024px) {
+      .content-wrapper { padding: 0.875rem 1.5rem; }
+    }
+
+    .header-card { margin-bottom: 0 !important; flex-shrink: 0; }
+    .header-content { padding: 0.5rem 1.25rem !important; }
+    .company-label { font-size: 0.5rem !important; margin-bottom: 0.125rem !important; }
+    .greeting-emoji { font-size: 0.9375rem !important; }
+    .greeting-text { font-size: 0.9375rem !important; }
+    .time-badge { padding: 0.1875rem 0.5rem !important; font-size: 0.625rem !important; }
+    .date-text { font-size: 0.625rem !important; }
+
+    /* ── Generic small cards (Office Settings) never grow — the
+       Employee History table-card claims all remaining height. ── */
+    .att-card {
+      background: white;
+      border-radius: 1.125rem;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.06);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .att-card-header {
+      padding: 0.85rem 1.1rem;
+      border-bottom: 1px solid #f1f2f4;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .att-card-header-left { display: flex; align-items: center; gap: 0.5rem; }
+    .att-card-header h2 { font-size: 0.875rem; font-weight: 800; color: #1e293b; margin: 0; }
+    .att-card-body { padding: 0.9rem 1.1rem; }
+
+    .att-office-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 0.85rem;
+    }
+    .att-field label { display: block; font-size: 0.75rem; font-weight: 700; color: #64748b; margin-bottom: 0.3rem; }
+    .att-field input {
+      width: 100%; padding: 0.55rem 0.7rem; border: 1px solid #e2e8f0; border-radius: 0.6rem;
+      font-size: 0.8125rem; color: #1e293b; box-sizing: border-box;
+    }
+    .att-field input:focus { outline: none; border-color: #8b5cf6; }
+    .att-office-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; }
+    .att-btn {
+      padding: 0.6rem 1.05rem; border-radius: 0.7rem; border: none; font-weight: 700; font-size: 0.8125rem;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; transition: transform 0.15s;
+    }
+    .att-btn:hover { transform: translateY(-1px); }
+    .att-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .att-btn.primary { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; }
+    .att-btn.secondary { background: #f1f5f9; color: #1e293b; border: 1px solid #e2e8f0; }
+    .att-save-hint { font-size: 0.75rem; color: #16a34a; font-weight: 700; margin-left: 0.25rem; opacity: 0; transition: opacity 0.2s; }
+    .att-save-hint.show { opacity: 1; }
+    .att-accuracy-hint { font-size: 0.7rem; color: #ea580c; font-weight: 600; width: 100%; }
+
+    .att-status-pill {
+      display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.7rem; border-radius: 9999px;
+      font-size: 0.75rem; font-weight: 700; white-space: nowrap;
+    }
+    .att-status-pill.not-in { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
+    .att-status-pill.in { background: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0; }
+    .att-status-pill.out { background: #ede9fe; color: #7c3aed; border: 1px solid #ddd6fe; }
+    .att-name-cell { font-weight: 700; color: #1e293b; }
+    .att-dept-cell { font-size: 0.75rem; color: #94a3b8; }
+
+    /* ══════════ "Today — Who's In" collapsible widget
+       (same visual language as the "Assigned Tasks from Manager" card:
+       dot + title + count badge + View all/Hide toggle, collapsed
+       by default). ══════════ */
+    .atw-header {
+      display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+      padding: 0.85rem 1.1rem;
+      background: linear-gradient(135deg, #f4f2fa, #faf9fc);
+      cursor: pointer; user-select: none;
+    }
+    .atw-header-left { display: flex; align-items: center; gap: 0.55rem; }
+    .atw-dot { width: 8px; height: 8px; border-radius: 50%; background: #8b5cf6; flex-shrink: 0; }
+    .atw-title { font-size: 0.875rem; font-weight: 800; color: #1e293b; margin: 0; }
+    .atw-count-badge {
+      min-width: 20px; height: 20px; padding: 0 0.35rem; border-radius: 9999px; background: #ef4444;
+      color: #fff; font-size: 0.6875rem; font-weight: 800; display: flex; align-items: center; justify-content: center;
+    }
+    .atw-toggle { display: flex; align-items: center; gap: 0.3rem; font-size: 0.8125rem; font-weight: 700; color: #7c3aed; flex-shrink: 0; }
+    .atw-body { border-top: 1px solid #f1f2f4; max-height: 280px; overflow-y: auto; }
+    .atw-body::-webkit-scrollbar { width: 8px; }
+    .atw-body::-webkit-scrollbar-thumb { background: #ddd6fe; border-radius: 4px; }
+    .atw-sub { padding: 0.55rem 1.1rem 0; font-size: 0.75rem; color: #94a3b8; font-weight: 600; }
+
+    /* ── Employee History: same table-card treatment as the Work Log
+       page — flexes to fill the remaining vertical space. ── */
+    .table-card { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+
+    .table-scroll-wrapper { position: relative; flex: 1 1 auto; min-height: 0; display: flex; }
+    .table-container {
+      overflow: auto; flex: 1; min-height: 0;
+      scrollbar-width: auto; scrollbar-color: #8b5cf6 #f3f4f6;
+      -webkit-overflow-scrolling: touch; scroll-behavior: smooth;
+    }
+    .table-container::-webkit-scrollbar { width: 12px; height: 12px; }
+    .table-container::-webkit-scrollbar-track { background: #f3f4f6; }
+    .table-container::-webkit-scrollbar-thumb { background: #8b5cf6; border-radius: 6px; border: 3px solid #f3f4f6; }
+    .table-container::-webkit-scrollbar-thumb:hover { background: #7c3aed; }
+
+    .scroll-fade {
+      position: absolute; top: 0; bottom: 0; width: 28px; pointer-events: none; z-index: 5;
+      opacity: 0; transition: opacity 0.2s ease;
+    }
+    .scroll-fade-left { left: 0; background: linear-gradient(to right, rgba(255,255,255,0.97), rgba(255,255,255,0)); }
+    .scroll-fade-right { right: 0; background: linear-gradient(to left, rgba(255,255,255,0.97), rgba(255,255,255,0)); }
+    .scroll-fade.visible { opacity: 1; }
+
+    /* worklog-table is reused for BOTH the Who's In table and the
+       Employee History table, so they share one consistent look. */
+    .worklog-table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+    .worklog-table th {
+      text-align: left; padding: 0.7rem 0.85rem; background: #f8fafc; color: #64748b; font-weight: 700;
+      font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid #eef0f3;
+      white-space: nowrap; position: sticky; top: 0; z-index: 1;
+    }
+    .worklog-table td { padding: 0.75rem 0.85rem; white-space: normal; word-break: break-word; vertical-align: middle; color: #334155; }
+    .worklog-table td.nowrap-cell { white-space: nowrap; }
+    .worklog-table tbody tr:nth-child(even) { background: #fafafa; }
+    .worklog-table tbody tr { border-bottom: 1px solid #eef0f3; }
+    .worklog-table tbody tr:hover { background: #f5f0ff; }
+    .worklog-table th, .worklog-table td { border-right: 1px solid #f1f2f4; }
+    .worklog-table th:last-child, .worklog-table td:last-child { border-right: none; }
+    .worklog-table tr:last-child td { border-bottom: none; }
+    .att-mono { font-variant-numeric: tabular-nums; font-weight: 700; color: #1e293b; white-space: nowrap; }
+    .att-office-cell { color: #7c3aed; font-weight: 700; font-size: 0.75rem; max-width: 180px; }
+    .loading-cell, .att-empty-hint { text-align: center; color: #94a3b8; padding: 2.5rem 1rem; font-size: 0.875rem; }
+
+    /* ── Location cells: small width + single-line height. Click opens
+       the full address in a popover (same interaction as the Task /
+       Remark cells on the Work Log page). ── */
+    .loc-cell-compact {
+      max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      cursor: pointer; transition: color 0.15s;
+    }
+    .loc-clickable:hover { color: #7c3aed; }
+    td.cell-active { background: #f5f3ff !important; }
+
+    .task-popover {
+      position: fixed; z-index: 1000; background: #1e293b; color: #f8fafc; padding: 0.75rem 1rem;
+      border-radius: 0.75rem; font-size: 0.8125rem; line-height: 1.5;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.25), 0 8px 10px -6px rgba(0,0,0,0.15);
+      opacity: 0; transform: translateY(-4px); transition: opacity 0.15s ease, transform 0.15s ease;
+      word-break: break-word; white-space: normal; max-height: 260px; overflow-y: auto;
+    }
+    .task-popover.show { opacity: 1; transform: translateY(0); }
+    .task-popover::before {
+      content: ''; position: absolute; top: -6px; left: 20px; width: 12px; height: 12px;
+      background: #1e293b; transform: rotate(45deg);
+    }
+    .task-popover.arrow-bottom::before { top: auto; bottom: -6px; transform: rotate(225deg); }
+
+    .team-bar { flex-shrink: 0; }
+
+    .spinner-inline {
+      width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.4); border-top-color: white;
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
+    .spinner-inline.dark { border-color: rgba(139,92,246,0.25); border-top-color: #8b5cf6; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <button id="mobileMenuToggle" class="mobile-menu-toggle">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+  <div id="mobileBackdrop" class="mobile-backdrop"></div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+      <a href="/" class="sidebar-logo">
+        <div class="logo-box"><span id="logoInitials">HA</span></div>
+        <span id="sidebarCompanyName" class="company-name">HAEGL</span>
+      </a>
+      <button id="collapseBtn" class="collapse-btn" title="Collapse sidebar">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      </button>
+    </div>
+    <div class="role-badge"><div class="role-dot"></div><span>Admin</span></div>
+    <nav class="sidebar-nav">
+      <a href="/admin/worklog/" class="nav-link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+        <span>Work Log</span>
+      </a>
+      <a href="/admin/employees/" class="nav-link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        <span>Employees</span>
+      </a>
+      <a href="/admin/analytics/" class="nav-link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+        <span>Analytics</span>
+      </a>
+      <a href="/admin/chat/" class="nav-link">
+        <div class="relative">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          <span id="chatBadge" class="chat-badge hidden">0</span>
+        </div>
+        <span>Chat</span>
+      </a>
+      <a href="/admin/profile/" class="nav-link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        <span>Profile</span>
+      </a>
+      <a href="/admin/attendance/" class="nav-link active">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+        <span>Attendance</span>
+        <div class="active-indicator"></div>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <button onclick="handleLogout()" class="logout-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+        <span>Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="content-wrapper">
+
+      <div class="header-card">
+        <div class="header-bg"></div>
+        <div class="header-content">
+          <div class="header-top">
+            <div>
+              <p class="company-label" id="headerCompanyLabel">HAEGL · ATTENDANCE</p>
+              <div class="greeting-section">
+                <span class="greeting-emoji">📍</span>
+                <span class="greeting-text">Company Attendance Overview</span>
+              </div>
+            </div>
+            <div class="time-info">
+              <span class="time-badge">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                <span id="currentTime">--:--:--</span>
+              </span>
+              <span class="date-text" id="currentDate"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Office location settings -->
+      <div class="att-card">
+        <div class="att-card-header">
+          <div class="att-card-header-left">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M3 21h18"></path><path d="M5 21V7l8-4v18"></path><path d="M19 21V11l-6-4"></path></svg>
+            <h2>Office Location Settings</h2>
+          </div>
+        </div>
+        <div class="att-card-body">
+          <div class="att-office-grid">
+            <div class="att-field">
+              <label>Office Name / Address</label>
+              <input type="text" id="officeAddressInput" placeholder="e.g. Stellar Mall, Ground Floor, Vidyanagar, Hubli - 580021, Karnataka, India">
+            </div>
+            <div class="att-field">
+              <label>Latitude</label>
+              <input type="text" id="officeLatInput" placeholder="e.g. 15.3647">
+            </div>
+            <div class="att-field">
+              <label>Longitude</label>
+              <input type="text" id="officeLngInput" placeholder="e.g. 75.1240">
+            </div>
+            <div class="att-field">
+              <label>Geofence Radius (meters)</label>
+              <input type="number" id="officeRadiusInput" placeholder="200" min="10">
+            </div>
+          </div>
+          <div class="att-office-actions">
+            <button class="att-btn secondary" id="useMyLocationBtn" onclick="useMyLocation()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
+              Use My Current Location
+            </button>
+            <button class="att-btn primary" id="saveOfficeBtn" onclick="saveOfficeLocation()">Save Office Location</button>
+            <span class="att-save-hint" id="saveHint">Saved ✓</span>
+            <div class="att-accuracy-hint hidden" id="accuracyHint"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Today's attendance — collapsible, table form, hidden by default -->
+      <div class="att-card">
+        <div class="atw-header" id="todayHeader" onclick="toggleTodayPanel()">
+          <div class="atw-header-left">
+            <span class="atw-dot"></span>
+            <h2 class="atw-title">Today — Who's In</h2>
+            <span class="atw-count-badge" id="todayCountBadge">0</span>
+          </div>
+          <span class="atw-toggle" id="todayToggleLabel">
+            View all
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </span>
+        </div>
+        <div class="atw-body" id="todayPanelBody" style="display:none;">
+          <div class="atw-sub" id="todayCountHint"></div>
+          <div style="overflow-x:auto;">
+            <table class="worklog-table">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Status</th>
+                  <th>Check In</th>
+                  <th>In Location</th>
+                  <th>Check Out</th>
+                  <th>Out Location</th>
+                </tr>
+              </thead>
+              <tbody id="todayBody">
+                <tr><td colspan="6" class="loading-cell">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Employee History — big, scrollable, same treatment as Work Log -->
+      <div class="table-card">
+        <div class="table-toolbar">
+          <div class="toolbar-left">
+            <div class="table-dot"></div>
+            <h2 class="table-title" id="historyTableTitle">Employee History</h2>
+            <span class="entries-count" id="historyEntriesCount">0</span>
+            <span class="filtered-badge hidden" id="historyFilteredBadge">
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+              </svg>
+              Filtered
+            </span>
+          </div>
+          <div class="toolbar-right">
+            <select id="historyMonthFilter" class="filter-select">
+              <option value="">All Months</option>
+              <option value="0">January</option>
+              <option value="1">February</option>
+              <option value="2">March</option>
+              <option value="3">April</option>
+              <option value="4">May</option>
+              <option value="5">June</option>
+              <option value="6">July</option>
+              <option value="7">August</option>
+              <option value="8">September</option>
+              <option value="9">October</option>
+              <option value="10">November</option>
+              <option value="11">December</option>
+            </select>
+            <select id="historyYearFilter" class="filter-select">
+              <option value="">All Years</option>
+            </select>
+            <button onclick="applyHistoryFilters()" class="apply-btn">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+              </svg>
+              Apply
+            </button>
+            <button onclick="clearHistoryFilters()" class="clear-btn hidden" id="clearHistoryFiltersBtn">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                <path d="M3 3v5h5"></path>
+              </svg>
+              Clear
+            </button>
+          </div>
+        </div>
+
+        <div class="table-scroll-wrapper">
+          <div class="scroll-fade scroll-fade-left" id="historyScrollFadeLeft"></div>
+          <div class="table-container" id="historyTableContainer">
+            <table class="worklog-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Check In</th>
+                  <th>In Location</th>
+                  <th>Check Out</th>
+                  <th>Out Location</th>
+                  <th>Office</th>
+                </tr>
+              </thead>
+              <tbody id="employeeHistoryBody">
+                <tr><td colspan="6" class="loading-cell">Select a teammate below to view their attendance history.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="scroll-fade scroll-fade-right" id="historyScrollFadeRight"></div>
+        </div>
+
+        <!-- Team Bar -->
+        <div class="team-bar">
+          <div class="team-bar-bg"></div>
+          <div class="team-bar-content">
+            <div class="team-label">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              <span>Team</span>
+            </div>
+            <div id="teamChips" class="team-chips">
+              <span class="loading-text">Loading team...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/auth.js"></script>
+  <script src="/static/js/chat-notifications-widget.js"></script>
+  <script>
+    requireAdmin();
+
+    const START_YEAR = 2026;
+
+    let officeLoc = null;
+    let todayList = [];
+    let teamList = [];
+    let selectedEmployeeId = null;
+    let historyEntries = [];
+    let filteredHistory = [];
+    let appliedMonth = '';
+    let appliedYear = '';
+    let todayPanelOpen = false;
+
+    function authHeadersJson() {
+      return {
+        'Content-Type': 'application/json',
+        'Authorization': `Token ${localStorage.getItem('token')}`,
+      };
+    }
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function initialsOf(name) {
+      if (!name) return '?';
+      return name.trim().split(/\s+/).map(w => w[0]).join('').substring(0, 2).toUpperCase();
+    }
+
+    function fmtClockTime(iso) {
+      if (!iso) return '—';
+      return new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    function tickClock() {
+      const n = new Date();
+      const t = n.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      document.getElementById('currentTime').textContent = t;
+      const d = n.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      document.getElementById('currentDate').textContent = d;
+    }
+
+    // ══════════ Click-to-preview popover (Location cells) —
+    // identical interaction to the Task/Remark cells on Work Log. ══════════
+    let activePopover = null;
+    let activePopoverCell = null;
+
+    function closePreviewPopover() {
+      if (activePopover) { activePopover.remove(); activePopover = null; }
+      if (activePopoverCell) { activePopoverCell.classList.remove('cell-active'); activePopoverCell = null; }
+    }
+
+    function openPreviewPopover(cellEl, text) {
+      const rect = cellEl.getBoundingClientRect();
+      const popover = document.createElement('div');
+      popover.className = 'task-popover';
+      popover.textContent = text;
+      document.body.appendChild(popover);
+
+      const popoverWidth = Math.min(320, window.innerWidth - 24);
+      popover.style.width = popoverWidth + 'px';
+
+      let left = rect.left;
+      if (left + popoverWidth > window.innerWidth - 12) left = window.innerWidth - popoverWidth - 12;
+      if (left < 12) left = 12;
+
+      let top = rect.bottom + 8;
+      const popoverHeight = popover.offsetHeight;
+      if (top + popoverHeight > window.innerHeight - 12) {
+        top = rect.top - popoverHeight - 8;
+        popover.classList.add('arrow-bottom');
+        if (top < 12) top = 12;
+      }
+
+      popover.style.top = top + 'px';
+      popover.style.left = left + 'px';
+      requestAnimationFrame(() => popover.classList.add('show'));
+
+      cellEl.classList.add('cell-active');
+      activePopover = popover;
+      activePopoverCell = cellEl;
+    }
+
+    function handlePreviewCellClick(cellEl, text) {
+      if (activePopoverCell === cellEl) { closePreviewPopover(); return; }
+      closePreviewPopover();
+      if (!text) return;
+      openPreviewPopover(cellEl, text);
+    }
+
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('.loc-clickable')) return;
+      if (activePopover && !activePopover.contains(e.target)) closePreviewPopover();
+    });
+
+    function handleTodayLocClick(cellEl) {
+      const empId = parseInt(cellEl.dataset.rowId, 10);
+      const field = cellEl.dataset.field;
+      const row = todayList.find(r => r.employee_id === empId);
+      const a = row && row.attendance;
+      const text = a ? (field === 'in' ? a.check_in_address : a.check_out_address) : '';
+      handlePreviewCellClick(cellEl, text);
+    }
+
+    function handleHistoryLocClick(cellEl) {
+      const id = parseInt(cellEl.dataset.entryId, 10);
+      const field = cellEl.dataset.field;
+      const entry = filteredHistory.find(e => e.id === id) || historyEntries.find(e => e.id === id);
+      const text = entry ? (field === 'in' ? entry.check_in_address : entry.check_out_address) : '';
+      handlePreviewCellClick(cellEl, text);
+    }
+
+    // ══════════ Reverse geocoding ══════════
+    // Prefers the actual matched place's own name (e.g. "Stellar Mall")
+    // returned by Nominatim at the top level, over guessing from address
+    // component keys — OSM tags a mall inconsistently (shop=mall,
+    // building=retail, amenity=marketplace, etc.), so relying on one
+    // specific key like `address.mall` silently misses it and falls
+    // back to a generic road name instead. namedetails=1 + the result's
+    // own `name`/`display_name` catches the POI reliably.
+    async function reverseGeocode(lat, lng) {
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&namedetails=1`, {
+          headers: { 'Accept-Language': 'en' }
+        });
+        const data = await res.json();
+        const a = data && data.address;
+        const parts = [];
+
+        const primaryName = (data && data.name) ||
+          (data && data.namedetails && (data.namedetails.name || data.namedetails['name:en'])) ||
+          (a && (a.mall || a.shop || a.amenity || a.building || a.office || a.leisure || a.tourism || a.retail));
+        if (primaryName) parts.push(primaryName);
+
+        if (a) {
+          if (a.road) parts.push(a.house_number ? `${a.house_number} ${a.road}` : a.road);
+          else if (a.pedestrian) parts.push(a.pedestrian);
+          const area = a.suburb || a.neighbourhood || a.quarter;
+          if (area) parts.push(area);
+          const city = a.city || a.town || a.village || a.county;
+          if (city) parts.push(city);
+          if (a.state) parts.push(a.state);
+          if (a.postcode) parts.push(a.postcode);
+        }
+
+        const built = [...new Set(parts.filter(Boolean))].join(', ');
+        if (built) return built;
+        return (data && data.display_name) || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      } catch (e) {
+        console.error('Reverse geocode failed:', e);
+        return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      }
+    }
+
+    // ══════════ Office location settings ══════════
+    async function loadOfficeLocation() {
+      try {
+        const res = await fetch('/api/attendance/office-location/', { headers: authHeadersJson() });
+        officeLoc = await res.json();
+        document.getElementById('officeAddressInput').value = officeLoc.address || '';
+        document.getElementById('officeLatInput').value = officeLoc.latitude != null ? officeLoc.latitude : '';
+        document.getElementById('officeLngInput').value = officeLoc.longitude != null ? officeLoc.longitude : '';
+        document.getElementById('officeRadiusInput').value = officeLoc.radius_meters || 200;
+      } catch (e) {
+        console.error('Failed to load office location:', e);
+      }
+    }
+
+    function useMyLocation() {
+      const btn = document.getElementById('useMyLocationBtn');
+      const accuracyHint = document.getElementById('accuracyHint');
+      accuracyHint.classList.add('hidden');
+      accuracyHint.textContent = '';
+
+      if (!navigator.geolocation) { alert('Geolocation is not supported by this browser.'); return; }
+      const originalHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-inline dark"></span> Locating...';
+
+      navigator.geolocation.getCurrentPosition(
+        async pos => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          const accuracy = pos.coords.accuracy; // meters
+
+          document.getElementById('officeLatInput').value = lat.toFixed(6);
+          document.getElementById('officeLngInput').value = lng.toFixed(6);
+
+          const address = await reverseGeocode(lat, lng);
+          document.getElementById('officeAddressInput').value = address;
+
+          if (accuracy && accuracy > 50) {
+            accuracyHint.textContent = `⚠ GPS accuracy is only ~${Math.round(accuracy)}m — if the address above isn't exactly right (e.g. it should say "Stellar Mall, Ground Floor, Vidyanagar, Hubli - 580021, Karnataka, India"), please correct it manually before saving.`;
+            accuracyHint.classList.remove('hidden');
+          }
+
+          btn.disabled = false;
+          btn.innerHTML = originalHtml;
+        },
+        err => {
+          let msg = 'Could not get your location. Please enter latitude/longitude manually.';
+          if (err && err.code === 1) msg = 'Location permission denied. Please allow location access in your browser and try again.';
+          else if (err && err.code === 3) msg = 'Getting your location timed out. Please try again.';
+          alert(msg);
+          btn.disabled = false;
+          btn.innerHTML = originalHtml;
+        },
+        { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+      );
+    }
+
+    async function saveOfficeLocation() {
+      const btn = document.getElementById('saveOfficeBtn');
+      const hint = document.getElementById('saveHint');
+      const address = document.getElementById('officeAddressInput').value.trim();
+      const lat = document.getElementById('officeLatInput').value;
+      const lng = document.getElementById('officeLngInput').value;
+      const radius = document.getElementById('officeRadiusInput').value;
+
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/attendance/office-location/', {
+          method: 'PUT',
+          headers: authHeadersJson(),
+          body: JSON.stringify({ address, latitude: lat, longitude: lng, radius_meters: radius }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.error || 'Failed to save office location.');
+        } else {
+          officeLoc = data;
+          hint.classList.add('show');
+          setTimeout(() => hint.classList.remove('show'), 2000);
+        }
+      } catch (e) {
+        alert('Failed to save office location.');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // ══════════ Today — Who's In (collapsible table) ══════════
+    function toggleTodayPanel() {
+      todayPanelOpen = !todayPanelOpen;
+      const body = document.getElementById('todayPanelBody');
+      const label = document.getElementById('todayToggleLabel');
+      body.style.display = todayPanelOpen ? 'block' : 'none';
+      label.innerHTML = todayPanelOpen
+        ? 'Hide <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>'
+        : 'View all <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+    }
+
+    async function loadTodayAttendance() {
+      const tbody = document.getElementById('todayBody');
+      try {
+        const res = await fetch('/api/admin/attendance/today/', { headers: authHeadersJson() });
+        const data = await res.json();
+        todayList = Array.isArray(data) ? data : [];
+
+        const checkedInNow = todayList.filter(r => r.attendance && r.attendance.check_in_time && !r.attendance.check_out_time).length;
+        document.getElementById('todayCountBadge').textContent = checkedInNow;
+        const totalIn = todayList.filter(r => r.attendance && r.attendance.check_in_time).length;
+        document.getElementById('todayCountHint').textContent = `${totalIn} of ${todayList.length} checked in today`;
+
+        if (!todayList.length) {
+          tbody.innerHTML = '<tr><td colspan="6" class="loading-cell">No employees found.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = todayList.map(row => {
+          const a = row.attendance;
+          let pillClass = 'not-in', pillText = 'Not checked in';
+          if (a && a.check_in_time && !a.check_out_time) { pillClass = 'in'; pillText = 'Checked in'; }
+          else if (a && a.check_in_time && a.check_out_time) { pillClass = 'out'; pillText = 'Checked out'; }
+
+          return `
+            <tr>
+              <td class="nowrap-cell">
+                <div class="att-name-cell">${escapeHtml(row.employee_name)}</div>
+                <div class="att-dept-cell">${escapeHtml(row.department) || ''}</div>
+              </td>
+              <td class="nowrap-cell"><span class="att-status-pill ${pillClass}">${pillText}</span></td>
+              <td class="nowrap-cell att-mono">${a ? fmtClockTime(a.check_in_time) : '—'}</td>
+              <td class="loc-cell-compact loc-clickable" data-row-id="${row.employee_id}" data-field="in" onclick="handleTodayLocClick(this)">${a && a.check_in_address ? escapeHtml(a.check_in_address) : '—'}</td>
+              <td class="nowrap-cell att-mono">${a ? fmtClockTime(a.check_out_time) : '—'}</td>
+              <td class="loc-cell-compact loc-clickable" data-row-id="${row.employee_id}" data-field="out" onclick="handleTodayLocClick(this)">${a && a.check_out_address ? escapeHtml(a.check_out_address) : '—'}</td>
+            </tr>
+          `;
+        }).join('');
+      } catch (e) {
+        console.error('Failed to load today\'s attendance:', e);
+        tbody.innerHTML = '<tr><td colspan="6" class="loading-cell">Failed to load attendance.</td></tr>';
+      }
+    }
+
+    // ══════════ Team bar + Employee History (Work Log-style) ══════════
+    async function loadTeamBar() {
+      const container = document.getElementById('teamChips');
+      try {
+        const res = await fetch('/api/employees/all/', { headers: authHeadersJson() });
+        const data = await res.json();
+        teamList = Array.isArray(data) ? data : [];
+        if (!teamList.length) {
+          container.innerHTML = '<span class="loading-text">No teammates yet.</span>';
+          return;
+        }
+        renderTeamBar();
+      } catch (e) {
+        console.error('Failed to load employees:', e);
+        container.innerHTML = '<span class="loading-text">Failed to load team.</span>';
+      }
+    }
+
+    function renderTeamBar() {
+      const container = document.getElementById('teamChips');
+      container.innerHTML = teamList.map(emp => `
+        <div class="team-chip ${selectedEmployeeId === emp.id ? 'active' : ''}" onclick="selectEmployee(${emp.id})">
+          <div class="chip-avatar">
+            ${emp.photo ? `<img src="${emp.photo}" alt="${escapeHtml(emp.full_name)}">` : `<span class="avatar-initials">${initialsOf(emp.full_name)}</span>`}
+          </div>
+          ${escapeHtml((emp.full_name || '').split(' ')[0])}
+        </div>
+      `).join('');
+    }
+
+    function selectEmployee(employeeId) {
+      selectedEmployeeId = employeeId;
+      renderTeamBar();
+      clearHistoryFilters(true);
+      loadEmployeeHistoryData();
+    }
+
+    async function loadEmployeeHistoryData() {
+      const tbody = document.getElementById('employeeHistoryBody');
+      if (!selectedEmployeeId) {
+        tbody.innerHTML = '<tr><td colspan="6" class="loading-cell">Select a teammate below to view their attendance history.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = '<tr><td colspan="6" class="loading-cell">Loading...</td></tr>';
+
+      try {
+        const res = await fetch(`/api/admin/employees/${selectedEmployeeId}/attendance/`, { headers: authHeadersJson() });
+        const data = await res.json();
+        historyEntries = Array.isArray(data) ? data : [];
+        renderHistoryYearOptions();
+        applyHistoryFilters();
+      } catch (e) {
+        console.error('Failed to load employee history:', e);
+        tbody.innerHTML = '<tr><td colspan="6" class="loading-cell">Failed to load history.</td></tr>';
+      }
+    }
+
+    function renderHistoryYearOptions() {
+      const currentYear = new Date().getFullYear();
+      const entryYears = historyEntries.map(e => new Date(e.date).getFullYear()).filter(y => !isNaN(y));
+      const allYears = [START_YEAR, currentYear, ...entryYears];
+      const maxYear = Math.max(...allYears);
+      const minYear = Math.min(...allYears);
+      const years = [];
+      for (let y = maxYear; y >= minYear; y--) years.push(y);
+
+      const sel = document.getElementById('historyYearFilter');
+      const prevValue = sel.value;
+      sel.innerHTML = '<option value="">All Years</option>' + years.map(y => `<option value="${y}">${y}</option>`).join('');
+      sel.value = prevValue;
+    }
+
+    function applyHistoryFilters() {
+      const month = parseInt(document.getElementById('historyMonthFilter').value);
+      const year = parseInt(document.getElementById('historyYearFilter').value);
+
+      filteredHistory = historyEntries.filter(entry => {
+        const d = new Date(entry.date);
+        return (isNaN(month) || d.getMonth() === month) && (isNaN(year) || d.getFullYear() === year);
+      });
+
+      appliedMonth = document.getElementById('historyMonthFilter').value;
+      appliedYear = document.getElementById('historyYearFilter').value;
+
+      renderHistoryEntries();
+      updateHistoryStats();
+    }
+
+    function clearHistoryFilters(silent) {
+      document.getElementById('historyMonthFilter').value = '';
+      document.getElementById('historyYearFilter').value = '';
+      appliedMonth = '';
+      appliedYear = '';
+      filteredHistory = [...historyEntries];
+      if (!silent) {
+        renderHistoryEntries();
+        updateHistoryStats();
+      }
+    }
+
+    function renderHistoryEntries() {
+      const tbody = document.getElementById('employeeHistoryBody');
+      closePreviewPopover();
+
+      if (!selectedEmployeeId) {
+        tbody.innerHTML = '<tr><td colspan="6" class="loading-cell">Select a teammate below to view their attendance history.</td></tr>';
+        return;
+      }
+
+      if (!filteredHistory.length) {
+        const emp = teamList.find(e => e.id === selectedEmployeeId);
+        tbody.innerHTML = `<tr><td colspan="6" class="loading-cell">${appliedMonth !== '' || appliedYear !== '' ? 'No records match this filter' : `${emp ? escapeHtml(emp.full_name) : 'This employee'} has no attendance records yet`}</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filteredHistory.map(r => `
+        <tr>
+          <td class="nowrap-cell" style="font-weight:700;color:#1e293b;">${r.date}</td>
+          <td class="nowrap-cell att-mono">${fmtClockTime(r.check_in_time)}</td>
+          <td class="loc-cell-compact loc-clickable" data-entry-id="${r.id}" data-field="in" onclick="handleHistoryLocClick(this)">${r.check_in_address ? escapeHtml(r.check_in_address) : '—'}</td>
+          <td class="nowrap-cell att-mono">${fmtClockTime(r.check_out_time)}</td>
+          <td class="loc-cell-compact loc-clickable" data-entry-id="${r.id}" data-field="out" onclick="handleHistoryLocClick(this)">${r.check_out_address ? escapeHtml(r.check_out_address) : '—'}</td>
+          <td class="att-office-cell">${escapeHtml(r.office_address) || '—'}</td>
+        </tr>
+      `).join('');
+    }
+
+    function updateHistoryStats() {
+      const emp = teamList.find(e => e.id === selectedEmployeeId);
+      document.getElementById('historyTableTitle').textContent = emp ? `${emp.full_name.split(' ')[0]}'s Attendance History` : 'Employee History';
+      document.getElementById('historyEntriesCount').textContent = filteredHistory.length;
+
+      const clearBtn = document.getElementById('clearHistoryFiltersBtn');
+      const filteredBadge = document.getElementById('historyFilteredBadge');
+      if (appliedMonth !== '' || appliedYear !== '') {
+        clearBtn.classList.remove('hidden');
+        filteredBadge.classList.remove('hidden');
+      } else {
+        clearBtn.classList.add('hidden');
+        filteredBadge.classList.add('hidden');
+      }
+    }
+
+    // ── Mobile scroll-edge fade for the Employee History table ──
+    function setupScrollFade() {
+      const container = document.getElementById('historyTableContainer');
+      const fadeLeft = document.getElementById('historyScrollFadeLeft');
+      const fadeRight = document.getElementById('historyScrollFadeRight');
+      if (!container || !fadeLeft || !fadeRight) return;
+
+      function update() {
+        const maxScroll = container.scrollWidth - container.clientWidth;
+        if (maxScroll <= 2) {
+          fadeLeft.classList.remove('visible');
+          fadeRight.classList.remove('visible');
+          return;
+        }
+        fadeLeft.classList.toggle('visible', container.scrollLeft > 4);
+        fadeRight.classList.toggle('visible', container.scrollLeft < maxScroll - 4);
+      }
+
+      container.addEventListener('scroll', () => { update(); closePreviewPopover(); }, { passive: true });
+      window.addEventListener('resize', () => { update(); closePreviewPopover(); });
+
+      const observer = new MutationObserver(update);
+      observer.observe(container, { childList: true, subtree: true });
+      update();
+    }
+
+    function setupSidebar() {
+      document.getElementById('mobileMenuToggle').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('mobileBackdrop').classList.toggle('show');
+      });
+      document.getElementById('mobileBackdrop').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('mobileBackdrop').classList.remove('show');
+      });
+      document.getElementById('collapseBtn').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+      });
+      const companyName = localStorage.getItem('company_name') || 'HAEGL';
+      document.getElementById('sidebarCompanyName').textContent = companyName;
+      document.getElementById('logoInitials').textContent = companyName.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+      document.getElementById('headerCompanyLabel').textContent = `${companyName.toUpperCase()} · ATTENDANCE`;
+    }
+
+    async function handleLogout() {
+      try {
+        await fetch('/api/logout/', { method: 'POST', headers: authHeadersJson() });
+      } catch {}
+      localStorage.removeItem('token'); localStorage.removeItem('user'); localStorage.removeItem('is_admin'); localStorage.removeItem('company_name');
+      window.location.href = '/';
+    }
+
+    async function loadChatBadge() {
+      try {
+        const res = await fetch('/api/chat/unread-count/', { headers: authHeadersJson() });
+        const data = await res.json();
+        if (data.total_unread > 0) {
+          const badge = document.getElementById('chatBadge');
+          badge.textContent = data.total_unread > 99 ? '99+' : data.total_unread;
+          badge.classList.remove('hidden');
+        }
+      } catch {}
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      setupSidebar();
+      tickClock();
+      setInterval(tickClock, 1000);
+      loadChatBadge();
+
+      await loadOfficeLocation();
+      await loadTodayAttendance();
+      await loadTeamBar();
+      setupScrollFade();
+    });
+  </script>
+</body>
+</html>

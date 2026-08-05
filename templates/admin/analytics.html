@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics - Admin - WorkTrack</title>
+  <link rel="icon" href="/static/assets/apple-icon.jpeg">
+  <link rel="stylesheet" href="/static/css/reset.css">
+  <link rel="stylesheet" href="/static/css/variables.css">
+  <link rel="stylesheet" href="/static/css/animations.css">
+  <link rel="stylesheet" href="/static/css/admin-analytics.css">
+  <link rel="stylesheet" href="/static/css/responsive.css">
+  <style>
+    /* ===== Page-specific additions: tighter layout + a clearly-visible, fully-structured chart ===== */
+
+    .page-wrapper {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 0.75rem 1rem;
+      gap: 0.5rem;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    @media (min-width: 1024px) {
+      .page-wrapper {
+        padding: 0.875rem 1.5rem;
+      }
+    }
+
+    .page-header,
+    .page-controls {
+      flex-shrink: 0;
+    }
+
+    /* Only this area scrolls — header, subtitle/search, and team bar stay fixed in place */
+    .scrollable-content {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      scrollbar-width: auto;
+      scrollbar-color: #8b5cf6 #f3f4f6;
+    }
+    .scrollable-content::-webkit-scrollbar { width: 12px; }
+    .scrollable-content::-webkit-scrollbar-track { background: #f3f4f6; }
+    .scrollable-content::-webkit-scrollbar-thumb { background: #8b5cf6; border-radius: 6px; border: 3px solid #f3f4f6; }
+    .scrollable-content::-webkit-scrollbar-thumb:hover { background: #7c3aed; }
+
+    .team-bar {
+      flex-shrink: 0;
+    }
+
+    /* ---- Chart card: give it a proper, fixed, fully-visible drawing area ---- */
+    .chart-card {
+      display: flex;
+      flex-direction: column;
+    }
+    .chart-canvas-wrapper {
+      position: relative;
+      width: 100%;
+      height: 380px;
+      margin: 0.5rem 0 1rem;
+    }
+    .chart-canvas-wrapper canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    @media (max-width: 768px) {
+      .chart-canvas-wrapper {
+        height: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Mobile Menu Toggle -->
+  <button id="mobileMenuToggle" class="mobile-menu-toggle">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+
+  <!-- Mobile Backdrop -->
+  <div id="mobileBackdrop" class="mobile-backdrop"></div>
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="sidebar">
+    <!-- Logo -->
+    <div class="sidebar-header">
+      <a href="/" class="sidebar-logo">
+        <div class="logo-box">
+          <span id="logoInitials">HA</span>
+        </div>
+        <span id="sidebarCompanyName" class="company-name">HAEGL</span>
+      </a>
+      <button id="collapseBtn" class="collapse-btn" title="Collapse sidebar">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Role Badge -->
+    <div class="role-badge">
+      <div class="role-dot"></div>
+      <span>Admin / Manager</span>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+      <a href="/admin/worklog/" class="nav-link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="3" y1="9" x2="21" y2="9"></line>
+          <line x1="9" y1="21" x2="9" y2="9"></line>
+        </svg>
+        <span>Work Log</span>
+      </a>
+      <a href="/admin/chat/" class="nav-link">
+        <div class="relative">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span id="chatBadge" class="chat-badge hidden">0</span>
+        </div>
+        <span>Chat</span>
+      </a>
+      <a href="/admin/employees/" class="nav-link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        <span>Employees</span>
+      </a>
+      <a href="/admin/analytics/" class="nav-link active">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="20" x2="18" y2="10"></line>
+          <line x1="12" y1="20" x2="12" y2="4"></line>
+          <line x1="6" y1="20" x2="6" y2="14"></line>
+        </svg>
+        <span>Analytics</span>
+        <div class="active-indicator"></div>
+      </a>
+      <a href="/admin/profile/" class="nav-link">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+  <span>Profile</span>
+  <a href="/employee/attendance/" class="nav-link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+          <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+        <span>Attendance</span>
+      </a>
+</a>
+    </nav>
+
+    <!-- Footer -->
+    <div class="sidebar-footer">
+      <button onclick="handleLogout()" class="logout-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        <span>Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="page-wrapper">
+
+      <!-- Header -->
+      <div class="page-header">
+        <h1 class="page-title">Analytics</h1>
+        <span class="page-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          Live Data
+        </span>
+      </div>
+
+      <!-- Subtitle + Search -->
+      <div class="page-controls">
+        <p class="page-subtitle" id="subtitleText">Track team performance and productivity metrics</p>
+        <div class="search-wrapper">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="search-icon">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="searchInput" placeholder="Search employee by name..." class="search-input">
+        </div>
+      </div>
+
+      <!-- Scrollable Content -->
+      <div class="scrollable-content">
+        <div id="contentArea" class="content-area">
+          <div class="loading-placeholder">
+            <div class="skeleton-header"></div>
+            <div class="skeleton-card"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Team Bar -->
+      <div class="team-bar">
+        <div class="team-bar-bg"></div>
+        <div class="team-bar-content">
+          <div class="team-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <span>Team</span>
+          </div>
+          <div id="teamChips" class="team-chips">
+            <span class="loading-text">Loading team...</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Chart.js Library -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- Scripts -->
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/auth.js"></script>
+  <script src="/static/js/chat-notifications-widget.js"></script>
+  <script>
+    // Authentication check
+    requireAdmin();
+
+    // State
+    let employees = [];
+    let filtered = [];
+    let selectedEmployee = null;
+    let entries = [];
+    let search = '';
+    let chartInstance = null;
+    let analyticsData = null;
+    let currentPeriod = 'month';
+
+    const OFFICE_HOURS_MINUTES = 8 * 60;
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadAnalytics();
+      await loadEmployees();
+      setupEventListeners();
+      updateCompanyName();
+      loadChatBadge();
+    });
+
+    // Load analytics data
+    async function loadAnalytics() {
+      try {
+        const data = await getAdminAnalytics(currentPeriod);
+        analyticsData = data;
+        renderAnalyticsOverview();
+      } catch (error) {
+        console.error('Failed to load analytics:', error);
+      }
+    }
+
+    // Render analytics overview
+    function renderAnalyticsOverview() {
+      if (!analyticsData) return;
+
+      // Update stat cards
+      animateValue('totalHours', 0, analyticsData.totalHours || 0, 1000);
+      animateValue('tasksCompleted', 0, analyticsData.tasksCompleted || 0, 1000);
+      document.getElementById('avgPerDay').textContent = (analyticsData.avgPerDay || 0).toFixed(1);
+      document.getElementById('pendingReview').textContent = analyticsData.pendingReview || 0;
+
+      // Update percentages for rings
+      const hoursPercent = Math.min(Math.round(((analyticsData.totalHours || 0) / 160) * 100), 100);
+      const tasksPercent = Math.min(Math.round(((analyticsData.tasksCompleted || 0) / 150) * 100), 100);
+      const avgPercent = Math.min(Math.round(((analyticsData.avgPerDay || 0) / 8) * 100), 100);
+      const reviewPercent = Math.min(Math.round(((analyticsData.pendingReview || 0) / 20) * 100), 100);
+
+      document.getElementById('hoursPercent').textContent = hoursPercent + '%';
+      document.getElementById('tasksPercent').textContent = tasksPercent + '%';
+      document.getElementById('avgPercent').textContent = avgPercent + '%';
+      document.getElementById('reviewPercent').textContent = reviewPercent + '%';
+
+      // Animate rings
+      setTimeout(() => {
+        updateRingProgress(0, hoursPercent);
+        updateRingProgress(1, tasksPercent);
+        updateRingProgress(2, avgPercent);
+        updateRingProgress(3, reviewPercent);
+      }, 100);
+
+      // Update utilization cards
+      document.getElementById('completionRate').textContent = (analyticsData.completionRate || 0) + '%';
+      document.getElementById('activeHours').textContent = (analyticsData.activeHours || 0).toFixed(1) + 'h';
+      document.getElementById('teamUtilization').textContent = (analyticsData.teamUtilization || 0) + '%';
+
+      document.querySelector('.progress-fill.teal').style.width = (analyticsData.completionRate || 0) + '%';
+      document.querySelector('.utilization-card:nth-child(2) .progress-fill').style.width = Math.min((analyticsData.teamUtilization || 0), 100) + '%';
+      document.querySelector('.utilization-card:nth-child(3) .progress-fill').style.width = Math.min((analyticsData.teamUtilization || 0), 100) + '%';
+
+      // Update rate bars
+      updateRateBars(analyticsData.hoursByEmployee || []);
+
+      // Update performance banner
+      document.getElementById('bannerCompleted').textContent = analyticsData.tasksCompleted || 0;
+      document.getElementById('bannerTasks').textContent = analyticsData.tasksCompleted || 0;
+      document.getElementById('bannerHours').textContent = (analyticsData.totalHours || 0) + 'h';
+      document.getElementById('bannerEfficiency').textContent = (analyticsData.completionRate || 0) + '%';
+    }
+
+    // Animate number value
+    function animateValue(id, start, end, duration) {
+      const obj = document.getElementById(id);
+      if (!obj) return;
+
+      const range = end - start;
+      const startTime = performance.now();
+
+      function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+
+        const value = Math.floor(start + range * easeOutCubic(progress));
+        obj.textContent = value;
+
+        if (progress < 1) {
+          requestAnimationFrame(update);
+        }
+      }
+
+      requestAnimationFrame(update);
+    }
+
+    // Easing function
+    function easeOutCubic(x) {
+      return 1 - Math.pow(1 - x, 3);
+    }
+
+    // Update ring progress
+    function updateRingProgress(index, percent) {
+      const rings = document.querySelectorAll('.stat-ring-progress');
+      if (rings[index]) {
+        const offset = 283 - (283 * percent / 100);
+        rings[index].style.strokeDashoffset = offset;
+      }
+    }
+
+    // Update rate bars
+    function updateRateBars(employees) {
+      const container = document.getElementById('rateBars');
+      if (!container) return;
+
+      const maxHours = employees.length > 0 ? Math.max(...employees.map(e => e.hours || 0)) : 1;
+
+      container.innerHTML = employees.map((emp, idx) => `
+        <div class="rate-bar" style="animation-delay: ${idx * 0.1}s">
+          <div class="rate-bar-header">
+            <span>${emp.name || 'Employee'}</span>
+            <div class="flex gap-3">
+              <span class="rate-value blue">${emp.hours || 0}h</span>
+              <span class="rate-value teal">${emp.tasks || 0} tasks</span>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <div class="h-2 bg-slate-100 rounded-full flex-1 overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-blue-300 to-blue-500 rounded-full transition-all duration-1000" style="width: ${maxHours > 0 ? ((emp.hours || 0) / maxHours * 100) : 0}%"></div>
+            </div>
+            <div class="h-2 bg-slate-100 rounded-full flex-1 overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-teal-400 to-teal-600 rounded-full transition-all duration-1000" style="width: ${((emp.tasks || 0) / 35) * 100}%"></div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Setup event listeners
+    function setupEventListeners() {
+      // Search
+      document.getElementById('searchInput').addEventListener('input', (e) => {
+        search = e.target.value;
+        applySearch();
+      });
+
+      // Mobile menu
+      const mobileToggle = document.getElementById('mobileMenuToggle');
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.getElementById('mobileBackdrop');
+
+      mobileToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('open');
+        backdrop.classList.toggle('show');
+      });
+
+      backdrop.addEventListener('click', () => {
+        sidebar.classList.remove('open');
+        backdrop.classList.remove('show');
+      });
+
+      // Sidebar collapse
+      document.getElementById('collapseBtn').addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed');
+      });
+    }
+
+    // Load employees
+    async function loadEmployees() {
+      const data = await getAdminEmployees();
+      if (Array.isArray(data)) {
+        employees = data;
+        filtered = data;
+        if (data.length > 0) {
+          selectedEmployee = data[0];
+          await loadEntries();
+        }
+      }
+      renderTeamBar();
+      renderContent();
+    }
+
+    // Apply search
+    function applySearch() {
+      if (search) {
+        filtered = employees.filter(e =>
+          `${e.first_name} ${e.last_name}`.toLowerCase().includes(search.toLowerCase()) ||
+          (e.email || '').toLowerCase().includes(search.toLowerCase())
+        );
+      } else {
+        filtered = employees;
+      }
+      renderTeamBar();
+    }
+
+    // Load entries for selected employee
+    async function loadEntries() {
+      if (!selectedEmployee) return;
+      const data = await getEmployeeEntries(selectedEmployee.id);
+      if (Array.isArray(data)) {
+        entries = data;
+      }
+    }
+
+    // Format minutes
+    function formatMinutes(mins) {
+      const sign = mins < 0 ? '-' : '';
+      const abs = Math.abs(mins);
+      const h = Math.floor(abs / 60);
+      const m = Math.round(abs % 60);
+      if (h === 0) return `${sign}${m}m`;
+      if (m === 0) return `${sign}${h}h`;
+      return `${sign}${h}h ${m}m`;
+    }
+
+    // Get performance banner
+    function getPerformanceBanner(completionRate) {
+      if (completionRate >= 80) return { bg: 'bg-teal-600', label: 'Excellent Performance', icon: '<polyline points="20 6 9 17 4 12"></polyline><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>' };
+      if (completionRate >= 60) return { bg: 'bg-blue-600', label: 'Good Performance', icon: '<polyline points="20 6 9 17 4 12"></polyline><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>' };
+      if (completionRate >= 40) return { bg: 'bg-amber-600', label: 'Moderate Performance Alert', icon: '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>' };
+      return { bg: 'bg-rose-600', label: 'Needs Improvement', icon: '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>' };
+    }
+
+    // Get performance text
+    function getPerformanceText(stats) {
+      const { completionRate, approvalRate, utilizationRate, savedOvertimeMinutes, notStarted, totalActualMinutes, targetMinutesForPeriod } = stats;
+      const isOverall_Saved = savedOvertimeMinutes >= 0;
+
+      if (entries.length === 0) return `${selectedEmployee?.first_name} has not logged any work yet. Encourage them to start tracking their daily tasks.`;
+      if (completionRate >= 80 && approvalRate >= 70) return `${selectedEmployee?.first_name} is performing excellently with a ${completionRate}% task completion rate and ${approvalRate}% approval rate. Against the 8-hour office day, they're utilizing ${utilizationRate}% of available time, ${isOverall_Saved ? `running ${formatMinutes(savedOvertimeMinutes)} ahead of planned schedules` : `running ${formatMinutes(Math.abs(savedOvertimeMinutes))} over planned schedules`}.`;
+      if (completionRate >= 60) return `${selectedEmployee?.first_name} shows good performance with a ${completionRate}% completion rate and ${utilizationRate}% utilization of the 8-hour office day. ${notStarted > 0 ? `${notStarted} task(s) haven't been started yet.` : 'There is room for improvement in achieving higher approval rates.'}`;
+      if (completionRate >= 40) return `${selectedEmployee?.first_name} has a moderate completion rate of ${completionRate}% with ${utilizationRate}% office-hours utilization. They may need additional support or guidance. ${notStarted > 0 ? `${notStarted} task(s) are still not started, which may be impacting overall performance.` : ''}`;
+      return `${selectedEmployee?.first_name} has a low completion rate of ${completionRate}% and ${utilizationRate}% utilization of the 8-hour office day. Immediate attention and support is recommended. Please review their workload and provide necessary assistance.`;
+    }
+
+    // Render content
+    function renderContent() {
+      const contentArea = document.getElementById('contentArea');
+      const subtitle = document.getElementById('subtitleText');
+
+      if (!selectedEmployee) {
+        subtitle.textContent = 'Select an employee to view performance';
+        contentArea.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 4 15"></polyline>
+                <polyline points="17 6 23 6 23 12"></polyline>
+              </svg>
+            </div>
+            <p>Select an employee to view their performance analytics</p>
+          </div>
+        `;
+        return;
+      }
+
+      subtitle.textContent = `Viewing performance for ${selectedEmployee.first_name} ${selectedEmployee.last_name}`;
+
+      // Calculate stats
+      const totalEntries = entries.length;
+      const completed = entries.filter(e => e.status === 'completed').length;
+      const inProgress = entries.filter(e => e.status === 'in_progress').length;
+      const notStarted = entries.filter(e => e.status === 'not_started').length;
+      const approved = entries.filter(e => e.review_status === 'approved').length;
+      const completionRate = totalEntries > 0 ? Math.round((completed / totalEntries) * 100) : 0;
+      const approvalRate = totalEntries > 0 ? Math.round((approved / totalEntries) * 100) : 0;
+
+      const entriesWithActual = entries.filter(e => e.actual_minutes !== null && e.actual_minutes !== undefined);
+      const totalPlannedMinutes = entries.reduce((sum, e) => sum + (e.planned_minutes || 0), 0);
+      const totalActualMinutes = entriesWithActual.reduce((sum, e) => sum + (e.actual_minutes || 0), 0);
+      const savedOvertimeMinutes = totalPlannedMinutes - totalActualMinutes;
+      const isOverall_Saved = savedOvertimeMinutes >= 0;
+
+      // Group by date
+      const entriesByDate = entries.reduce((acc, e) => {
+        if (!acc[e.date]) acc[e.date] = [];
+        acc[e.date].push(e);
+        return acc;
+      }, {});
+
+      const distinctDaysLogged = Object.keys(entriesByDate).length;
+      const targetMinutesForPeriod = distinctDaysLogged * OFFICE_HOURS_MINUTES;
+      const utilizationRate = targetMinutesForPeriod > 0 ? Math.round((totalActualMinutes / targetMinutesForPeriod) * 100) : 0;
+
+      // Chart data
+      const chartData = Object.entries(entriesByDate)
+        .map(([date, dayEntries]) => {
+          const plannedTotal = dayEntries.reduce((sum, e) => sum + (e.planned_minutes || 0), 0);
+          const actualTotal = dayEntries.reduce((sum, e) => sum + (e.actual_minutes || 0), 0);
+          return {
+            date,
+            plannedHours: +(plannedTotal / 60).toFixed(2),
+            actualHours: +(actualTotal / 60).toFixed(2),
+            officeHours: OFFICE_HOURS_MINUTES / 60,
+          };
+        })
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+      const banner = getPerformanceBanner(completionRate);
+
+      contentArea.innerHTML = `
+        <!-- Stat Cards -->
+        <div class="stat-cards">
+          ${renderStatCard('Completed', completed, totalEntries, completionRate, '#10B981', 'from-emerald-50 to-teal-50', '+12% from last week', 'Great Job!', '<circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>')}
+          ${renderStatCard('In Progress', inProgress, totalEntries, totalEntries ? Math.round((inProgress / totalEntries) * 100) : 0, '#F59E0B', 'from-amber-50 to-orange-50', '-3% from last week', 'Keep it flowing', '<circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>')}
+          ${renderStatCard('Not Started', notStarted, totalEntries, totalEntries ? Math.round((notStarted / totalEntries) * 100) : 0, '#EF476F', 'from-pink-50 to-rose-50', '+5% from last week', 'Time to begin', '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>')}
+          ${renderStatCard('Approved', approved, totalEntries, approvalRate, '#3B82F6', 'from-blue-50 to-cyan-50', '+8% from last week', 'Excellent', '<polyline points="23 6 13.5 15.5 8.5 10.5 4 15"></polyline><polyline points="17 6 23 6 23 12"></polyline>')}
+        </div>
+
+        <!-- Utilization Cards -->
+        <div class="utilization-cards">
+          <div class="utilization-card">
+            <div class="utilization-header">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span>Office Hours Utilization</span>
+            </div>
+            <p class="utilization-value text-teal-600">${utilizationRate}%</p>
+            <p class="utilization-desc">${formatMinutes(totalActualMinutes)} of ${formatMinutes(targetMinutesForPeriod)} target (8h/day × ${distinctDaysLogged} ${distinctDaysLogged === 1 ? 'day' : 'days'})</p>
+            <div class="progress-bar">
+              <div class="progress-fill teal" style="width: ${Math.min(utilizationRate, 100)}%"></div>
+            </div>
+          </div>
+
+          <div class="utilization-card">
+            <div class="utilization-header">
+              ${isOverall_Saved ? `
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                </svg>
+              ` : `
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+              `}
+              <span>${isOverall_Saved ? 'Time Saved' : 'Overtime'}</span>
+            </div>
+            <p class="utilization-value ${isOverall_Saved ? 'text-teal-600' : 'text-rose-600'}">${formatMinutes(Math.abs(savedOvertimeMinutes))}</p>
+            <p class="utilization-desc">${isOverall_Saved ? 'Finished ahead of planned time overall' : 'Exceeded planned time overall'}</p>
+            <div class="progress-bar">
+              <div class="progress-fill ${isOverall_Saved ? 'teal' : 'blue'}" style="width: ${Math.min(Math.abs((savedOvertimeMinutes / targetMinutesForPeriod) * 100), 100)}%"></div>
+            </div>
+          </div>
+
+          <div class="utilization-card">
+            <div class="utilization-header">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+              <span>Planned vs Actual</span>
+            </div>
+            <p class="utilization-value">${formatMinutes(totalActualMinutes)}</p>
+            <p class="utilization-desc">Actual, against ${formatMinutes(totalPlannedMinutes)} planned</p>
+            <div class="progress-bar">
+              <div class="progress-fill blue" style="width: ${totalPlannedMinutes > 0 ? Math.min((totalActualMinutes / totalPlannedMinutes) * 100, 100) : 0}%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chart Card -->
+        ${chartData.length > 0 ? `
+          <div class="chart-card">
+            <div class="chart-header">
+              <h2>Planned vs Actual Hours — ${selectedEmployee.first_name}</h2>
+              <div class="chart-legend">
+                <span><span class="legend-dot blue-light"></span> Planned</span>
+                <span><span class="legend-dot blue-dark"></span> Actual</span>
+              </div>
+            </div>
+            <p class="chart-subtitle">Daily distribution comparison</p>
+            <div class="chart-canvas-wrapper">
+              <canvas id="analyticsChart"></canvas>
+            </div>
+            <div class="rate-bars">
+              <div class="rate-bar">
+                <div class="rate-bar-header">
+                  <span>Completion Rate</span>
+                  <span class="rate-value blue">${completionRate}%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill blue" style="width: ${completionRate}%"></div>
+                </div>
+              </div>
+              <div class="rate-bar">
+                <div class="rate-bar-header">
+                  <span>Approval Rate</span>
+                  <span class="rate-value teal">${approvalRate}%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill teal" style="width: ${approvalRate}%"></div>
+                </div>
+              </div>
+            </div>
+            <p class="chart-note">Office hours target: 8h/day • Bars compare planned time against actual logged time per day</p>
+          </div>
+        ` : `
+          <div class="empty-chart">
+            <div class="empty-chart-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 4 15"></polyline>
+                <polyline points="17 6 23 6 23 12"></polyline>
+              </svg>
+            </div>
+            <p>No work entries yet for ${selectedEmployee.first_name}</p>
+          </div>
+        `}
+
+        <!-- Performance Banner -->
+        <div class="performance-banner ${banner.bg}">
+          <div class="banner-left">
+            <div class="banner-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                ${banner.icon}
+              </svg>
+            </div>
+            <div>
+              <h3>${banner.label}</h3>
+              <p>${getPerformanceText({ completionRate, approvalRate, utilizationRate, savedOvertimeMinutes, notStarted, totalActualMinutes, targetMinutesForPeriod })}</p>
+            </div>
+          </div>
+          <div class="banner-stats">
+            <div>
+              <p>${completed}</p>
+              <p>Completed</p>
+            </div>
+            <div>
+              <p>${inProgress}</p>
+              <p>In Progress</p>
+            </div>
+            <div>
+              <p>${notStarted}</p>
+              <p>Not Started</p>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Render chart if data exists
+      if (chartData.length > 0) {
+        setTimeout(() => renderChart(chartData), 100);
+      }
+
+      // Animate stat cards
+      setTimeout(() => {
+        document.querySelectorAll('.stat-ring-progress').forEach((ring, index) => {
+          ring.style.strokeDashoffset = ring.dataset.offset || '0';
+        });
+      }, 150);
+    }
+
+    // Render stat card
+    function renderStatCard(label, value, total, percent, color, bg, changeText, text, icon) {
+      const radius = 42;
+      const circumference = 2 * Math.PI * radius;
+      const offset = circumference - (percent / 100) * circumference;
+
+      return `
+        <div class="stat-card bg-gradient-to-br ${bg}">
+          <div class="stat-card-header">
+            <div class="stat-dot" style="background-color: ${color}"></div>
+            <p class="stat-label">${label}</p>
+          </div>
+          <div class="stat-value">
+            <span>${value}</span>
+            <span class="stat-total">/ ${total}</span>
+          </div>
+          <p class="stat-text">${changeText}</p>
+          <div class="stat-ring">
+            <svg class="stat-ring-svg" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="${radius}" fill="none" stroke="#E5E7EB" stroke-width="8"></circle>
+              <circle class="stat-ring-progress" cx="50" cy="50" r="${radius}" fill="none" stroke="${color}" stroke-width="8" stroke-linecap="round"
+                stroke-dasharray="${circumference}" stroke-dashoffset="${circumference}" data-offset="${offset}"></circle>
+            </svg>
+            <div class="stat-ring-center" style="background-color: ${color}15">
+              <div class="stat-ring-percent" style="color: ${color}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.5">
+                  ${icon}
+                </svg>
+                <div>${percent}%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Render chart
+    function renderChart(data) {
+      const ctx = document.getElementById('analyticsChart');
+      if (!ctx) return;
+
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      const labels = data.map(d => d.date);
+      const plannedData = data.map(d => d.plannedHours);
+      const actualData = data.map(d => d.actualHours);
+
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Planned (hrs)',
+              data: plannedData,
+              backgroundColor: '#93c5fd',
+              borderRadius: 6,
+            },
+            {
+              label: 'Actual (hrs)',
+              data: actualData,
+              backgroundColor: '#2563eb',
+              borderRadius: 6,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: {
+            padding: { top: 8, right: 8, bottom: 4, left: 4 }
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              backgroundColor: '#ffffff',
+              borderColor: '#e2e8f0',
+              borderWidth: 1,
+              borderRadius: 12,
+              titleColor: '#0f172a',
+              bodyColor: '#0f172a',
+              bodyFont: { size: 12 }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { color: '#94a3b8', font: { size: 11 } }
+            },
+            y: {
+              grid: { strokeDasharray: '3 3', color: '#f1f5f9' },
+              ticks: { color: '#94a3b8', font: { size: 11 } },
+              title: { display: true, text: 'Hours', color: '#94a3b8', font: { size: 11 } }
+            }
+          }
+        }
+      });
+    }
+
+    // Render team bar
+    function renderTeamBar() {
+      const container = document.getElementById('teamChips');
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<p class="no-team-text">No employees found</p>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(emp => `
+        <button onclick="selectEmployee(${emp.id})" class="team-chip ${selectedEmployee?.id === emp.id ? 'active' : ''}">
+          <div class="chip-avatar">
+            <span>${emp.first_name?.[0]}${emp.last_name?.[0]}</span>
+          </div>
+          ${emp.first_name}
+        </button>
+      `).join('');
+    }
+
+    // Select employee
+    async function selectEmployee(empId) {
+      selectedEmployee = employees.find(e => e.id === empId);
+      entries = [];
+      await loadEntries();
+      renderTeamBar();
+      renderContent();
+    }
+
+    // Update company name
+    function updateCompanyName() {
+      const companyName = localStorage.getItem('company_name') || 'HAEGL';
+      document.getElementById('sidebarCompanyName').textContent = companyName;
+      document.getElementById('logoInitials').textContent = companyName.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+    }
+
+    // Load chat badge
+    async function loadChatBadge() {
+      try {
+        const data = await getUnreadCount();
+        if (data.total_unread > 0) {
+          const badge = document.getElementById('chatBadge');
+          badge.textContent = data.total_unread > 99 ? '99+' : data.total_unread;
+          badge.classList.remove('hidden');
+        }
+      } catch {}
+    }
+
+    // Logout
+    async function handleLogout() {
+      try {
+        await fetch('/api/logout/', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Token ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json',
+          },
+        });
+      } catch {}
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('is_admin');
+      localStorage.removeItem('company_name');
+      window.location.href = '/';
+    }
+  </script>
+</body>
+</html>

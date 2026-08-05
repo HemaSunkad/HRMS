@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WorkTrack - Track work. Grow together.</title>
+  <meta name="description" content="Track your work, share your progress, grow together.">
+  <link rel="icon" href="/static/assets/apple-icon.jpeg">
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #f5f3ff 0%, #eef2ff 30%, #fdf2f8 65%, #ecfeff 100%);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* ===== SCATTERED FLOATING BUBBLES ===== */
+    .bubble-field {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .bubble {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(circle at 32% 30%, var(--b-color), transparent 72%);
+      border: 1px solid var(--b-border);
+      animation: bubbleDrift var(--b-duration) ease-in-out infinite;
+      animation-delay: var(--b-delay);
+    }
+
+    @keyframes bubbleDrift {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      25%      { transform: translate(14px, -12px) scale(1.04); }
+      50%      { transform: translate(-8px, 10px) scale(0.98); }
+      75%      { transform: translate(10px, 14px) scale(1.03); }
+    }
+
+    /* ===== MAIN CONTENT ===== */
+    .container {
+      position: relative;
+      z-index: 10;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 3rem 1.5rem 4rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 0.95rem;
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid rgba(196, 181, 253, 0.5);
+      border-radius: 9999px;
+      box-shadow: 0 4px 14px rgba(139, 92, 246, 0.12);
+      margin-bottom: 1.5rem;
+    }
+    .badge svg { width: 14px; height: 14px; color: #a855f7; }
+    .badge-text {
+      font-size: 0.78rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #a855f7, #ec4899);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .main-title {
+      font-size: 2.75rem;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      color: #0f172a;
+      margin-bottom: 1rem;
+    }
+    .gradient-text {
+      background: linear-gradient(90deg, #8b5cf6, #ec4899, #f97316);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .subtitle {
+      max-width: 460px;
+      color: #64748b;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin-bottom: 2.25rem;
+    }
+
+    /* ===== ROLE CARDS ===== */
+    .role-cards {
+      width: 100%;
+      max-width: 380px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+
+    .role-card {
+      display: block;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      border-radius: 1.1rem;
+      padding: 1.1rem 1.25rem;
+      cursor: pointer;
+      text-align: left;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+    .role-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 36px rgba(15, 23, 42, 0.1);
+    }
+
+    .role-card-content {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .role-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: #fff;
+    }
+    .role-icon svg { width: 22px; height: 22px; }
+    .employee-icon { background: linear-gradient(135deg, #22d3ee, #3b82f6); }
+    .admin-icon { background: linear-gradient(135deg, #a855f7, #7c3aed); }
+
+    .role-info { flex: 1; }
+    .role-title { font-size: 1rem; font-weight: 800; color: #0f172a; margin-bottom: 0.15rem; }
+    .role-description { font-size: 0.8rem; color: #64748b; line-height: 1.35; }
+
+    .arrow-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #94a3b8;
+      flex-shrink: 0;
+      position: relative;
+      transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+    /* The original SVG polyline points were wrong:
+         points="12 5 19 12 5 19"
+       A clean right-chevron needs a symmetric "V" tip:
+         points="12 5 19 12 12 19"
+       The bad third point (5,19) drew the arrowhead's second stroke
+       back toward the bottom-left, overlapping the shaft line and
+       producing a distorted, barely-visible shape instead of a ">".
+       Hiding the SVG and drawing a pure-CSS chevron sidesteps the
+       coordinate math entirely — it can't get a point wrong. */
+    .arrow-icon svg { display: none; }
+    .arrow-icon::after {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-top: 2px solid currentColor;
+      border-right: 2px solid currentColor;
+      transform: rotate(45deg) translate(-1px, 1px);
+    }
+    .role-card:hover .arrow-icon {
+      transform: translateX(4px);
+      background: rgba(139, 92, 246, 0.08);
+      border-color: rgba(139, 92, 246, 0.35);
+      color: #7c3aed;
+    }
+
+    /* ===== FOOTER ===== */
+    .site-footer {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      padding: 0.9rem 1rem;
+      background: linear-gradient(90deg, #22d3ee 0%, #3b82f6 55%, #7c3aed 100%);
+      text-align: center;
+    }
+    .site-footer p {
+      color: #ffffff;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+
+    @media (max-width: 480px) {
+      .main-title { font-size: 2.1rem; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Scattered floating bubble background -->
+  <div class="bubble-field" id="bubbleField"></div>
+
+  <!-- Main Content -->
+  <div class="container">
+    <div class="badge">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+      </svg>
+      <span class="badge-text">Work Management</span>
+    </div>
+
+    <h1 class="main-title">
+      <span class="gradient-text">Track work.</span><br>
+      Grow together.
+    </h1>
+
+    <p class="subtitle">Your team's work, all in one place — secure, private, and built for real productivity.</p>
+
+    <div class="role-cards">
+      <button class="role-card" onclick="selectRole('employee')">
+        <div class="role-card-content">
+          <div class="role-icon employee-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <div class="role-info">
+            <h3 class="role-title">Employee</h3>
+            <p class="role-description">Sign in to log your daily work and stay on top of tasks</p>
+          </div>
+          <div class="arrow-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </div>
+        </div>
+      </button>
+
+      <button class="role-card" onclick="selectRole('admin')">
+        <div class="role-card-content">
+          <div class="role-icon admin-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+          </div>
+          <div class="role-info">
+            <h3 class="role-title">Admin / Manager</h3>
+            <p class="role-description">Sign in or create your company account to manage your team</p>
+          </div>
+          <div class="arrow-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </div>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <p>© 2026 HAEGL Work Management · Track work, grow together · support@haegl.com</p>
+  </footer>
+
+  <script>
+    function selectRole(role) {
+      if (role === 'employee') {
+        window.location.href = '/employee-login/';
+      } else {
+        window.location.href = '/admin-login/';
+      }
+    }
+
+    // Scattered bubbles matching the reference screenshot:
+    // many small/medium soft-colored circles, gently drifting in place.
+    const BUBBLE_COLORS = [
+      { color: 'rgba(196,181,253,0.35)', border: 'rgba(196,181,253,0.45)' }, // violet
+      { color: 'rgba(251,207,232,0.35)', border: 'rgba(251,207,232,0.45)' }, // pink
+      { color: 'rgba(186,230,253,0.35)', border: 'rgba(186,230,253,0.45)' }, // blue
+      { color: 'rgba(254,240,138,0.30)', border: 'rgba(254,240,138,0.40)' }, // pale yellow
+      { color: 'rgba(167,243,208,0.30)', border: 'rgba(167,243,208,0.40)' }, // mint
+    ];
+
+    const BUBBLE_LAYOUT = [
+      { size: 26, top: '13%', left: '9%' },
+      { size: 70, top: '30%', left: '11%' },
+      { size: 34, top: '68%', left: '6%' },
+      { size: 30, top: '85%', left: '15%' },
+      { size: 22, top: '9%',  left: '47%' },
+      { size: 20, top: '95%', left: '37%' },
+      { size: 66, top: '13%', left: '68%' },
+      { size: 42, top: '32%', left: '89%' },
+      { size: 78, top: '2%',  left: '87%' },
+      { size: 30, top: '70%', left: '63%' },
+      { size: 24, top: '78%', left: '82%' },
+      { size: 44, top: '58%', left: '95%' },
+      { size: 20, top: '48%', left: '2%' },
+      { size: 18, top: '5%',  left: '28%' },
+      { size: 28, top: '90%', left: '92%' },
+      { size: 16, top: '60%', left: '30%' },
+      { size: 24, top: '40%', left: '55%' },
+      { size: 20, top: '20%', left: '95%' },
+    ];
+
+    function initBubbleField() {
+      const field = document.getElementById('bubbleField');
+      BUBBLE_LAYOUT.forEach((b, i) => {
+        const palette = BUBBLE_COLORS[i % BUBBLE_COLORS.length];
+        const el = document.createElement('div');
+        el.className = 'bubble';
+        el.style.setProperty('--b-color', palette.color);
+        el.style.setProperty('--b-border', palette.border);
+        el.style.setProperty('--b-duration', `${9 + (i % 6) * 1.5}s`);
+        el.style.setProperty('--b-delay', `${(i % 8) * 0.6}s`);
+        el.style.width = `${b.size}px`;
+        el.style.height = `${b.size}px`;
+        el.style.top = b.top;
+        el.style.left = b.left;
+        field.appendChild(el);
+      });
+    }
+
+    initBubbleField();
+  </script>
+</body>
+</html>

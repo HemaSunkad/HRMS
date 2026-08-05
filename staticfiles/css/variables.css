@@ -1,0 +1,240 @@
+/* ========================================
+   CSS VARIABLES & DESIGN TOKENS
+   ======================================== */
+
+:root {
+  /* === COLOR PALETTE === */
+  /* Background & Foreground */
+  --background: #f8f7ff;
+  --foreground: #1e1b2e;
+
+  /* Card Colors */
+  --card: #ffffff;
+  --card-foreground: #1e1b2e;
+
+  /* Popover */
+  --popover: #ffffff;
+  --popover-foreground: #1e1b2e;
+
+  /* Primary Colors (Purple/Violet theme) */
+  --primary: #8b5cf6;
+  --primary-foreground: #ffffff;
+
+  /* Secondary Colors (Pink theme) */
+  --secondary: #f3f0ff;
+  --secondary-foreground: #6d28d9;
+
+  /* Muted Colors */
+  --muted: #f4f3fb;
+  --muted-foreground: #6b7280;
+
+  /* Accent Colors */
+  --accent: #ec4899;
+  --accent-foreground: #ffffff;
+
+  /* Destructive/Error Colors */
+  --destructive: #f43f5e;
+
+  /* Border & Input Colors */
+  --border: #e9e5f7;
+  --input: #e9e5f7;
+
+  /* Focus Ring */
+  --ring: #8b5cf6;
+
+  /* Chart Colors */
+  --chart-1: #8b5cf6;
+  --chart-2: #ec4899;
+  --chart-3: #06b6d4;
+  --chart-4: #10b981;
+  --chart-5: #f59e0b;
+
+  /* Radius Values */
+  --radius: 0.875rem;
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* === SIDEBAR COLORS === */
+  --sidebar: #14101f;
+  --sidebar-foreground: #f1edff;
+  --sidebar-primary: #8b5cf6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #221a35;
+  --sidebar-accent-foreground: #f1edff;
+  --sidebar-border: rgba(139, 92, 246, 0.15);
+  --sidebar-ring: #8b5cf6;
+
+  /* === STATUS COLORS === */
+  --status-pending-bg: #fef3c7;
+  --status-pending-text: #92400e;
+  --status-pending-border: #f59e0b;
+
+  --status-approved-bg: #d1fae5;
+  --status-approved-text: #065f46;
+  --status-approved-border: #10b981;
+
+  --status-rejected-bg: #fee2e2;
+  --status-rejected-text: #991b1b;
+  --status-rejected-border: #ef4444;
+
+  /* === ROLE-SPECIFIC COLORS === */
+  /* Admin (Violet/Purple) */
+  --admin-primary: #8b5cf6;
+  --admin-secondary: #d946ef;
+  --admin-bg-light: #f3f0ff;
+  --admin-text: #6d28d9;
+
+  /* Employee (Cyan/Blue) */
+  --employee-primary: #06b6d4;
+  --employee-secondary: #3b82f6;
+  --employee-bg-light: #ecfeff;
+  --employee-text: #0e7490;
+
+  /* === GRADIENTS === */
+  --gradient-brand: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+  --gradient-brand-extended: linear-gradient(135deg, #8b5cf6, #ec4899, #f59e0b);
+  --gradient-admin: linear-gradient(135deg, #8b5cf6, #d946ef);
+  --gradient-employee: linear-gradient(135deg, #06b6d4, #3b82f6);
+
+  /* === PAGE BACKGROUNDS === */
+  --page-bg-light: linear-gradient(135deg, #f8f7ff 0%, #fdf4ff 50%, #fff5f9 100%);
+  --page-bg-dark: linear-gradient(rgba(20, 16, 31, 0.9), rgba(20, 16, 31, 0.9));
+
+  /* === TYPOGRAPHY === */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  --font-mono: 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', 'Consolas', 'Courier New', monospace;
+
+  /* === SPACING === */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+  --spacing-3xl: 4rem;
+
+  /* === SHADOWS === */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+  /* === Z-INDEX === */
+  --z-base: 1;
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+
+  /* === TRANSITIONS === */
+  --transition-fast: 150ms;
+  --transition-base: 200ms;
+  --transition-slow: 300ms;
+  --transition-slower: 500ms;
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* === HAEGL COLOR PALETTE === */
+  --haegl-purple: #c084fc;
+  --haegl-blue: #818cf8;
+  --haegl-purple-light: #e879f9;
+  --haegl-blue-light: #a78bfa;
+
+  /* === COLOR SCALES === */
+  /* Violet Scale */
+  --violet-50: #f5f3ff;
+  --violet-100: #ede9fe;
+  --violet-200: #ddd6fe;
+  --violet-300: #c4b5fd;
+  --violet-400: #a78bfa;
+  --violet-500: #8b5cf6;
+  --violet-600: #7c3aed;
+  --violet-700: #6d28d9;
+  --violet-800: #5b21b6;
+  --violet-900: #4c1d95;
+
+  /* Gray Scale */
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+
+  /* Emerald Scale */
+  --emerald-100: #d1fae5;
+  --emerald-200: #a7f3d0;
+  --emerald-300: #6ee7b7;
+  --emerald-500: #10b981;
+  --emerald-700: #047857;
+
+  /* Amber Scale */
+  --amber-100: #fef3c7;
+  --amber-200: #fde68a;
+  --amber-300: #fcd34d;
+  --amber-500: #f59e0b;
+  --amber-700: #b45309;
+
+  /* Rose Scale */
+  --rose-100: #fee2e2;
+  --rose-200: #fecaca;
+  --rose-300: #fda4af;
+  --rose-500: #f43f5e;
+  --rose-600: #e11d48;
+  --rose-700: #be123c;
+
+  /* Indigo Scale */
+  --indigo-500: #6366f1;
+  --indigo-600: #4f46e5;
+
+  /* Blue Scale */
+  --blue-50: #eff6ff;
+  --blue-100: #dbeafe;
+  --blue-200: #bfdbfe;
+  --blue-700: #1d4ed8;
+
+  /* Sky Scale */
+  --sky-100: #e0f2fe;
+  --sky-200: #bae6fd;
+  --sky-500: #0ea5e9;
+
+  /* Periwinkle */
+  --periwinkle: #b6c2ff;
+
+  /* Orange Scale */
+  --orange-100: #ffedd5;
+  --orange-200: #fed7aa;
+  --orange-500: #f97316;
+  --orange-700: #c2410c;
+
+  /* Avatar & Badge Colors */
+  --primary-bg: rgba(139, 92, 246, 0.1);
+  --sidebar-primary-bg: rgba(139, 92, 246, 0.15);
+}
+
+/* === DARK MODE OVERRIDES === */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0f0a1a;
+    --foreground: #e5e0f5;
+    --card: #1a1535;
+    --card-foreground: #e5e0f5;
+    --border: #2a2440;
+    --input: #2a2440;
+    --muted: #1a1535;
+    --muted-foreground: #9ca3af;
+  }
+}

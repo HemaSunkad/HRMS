@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile - Employee - WorkTrack</title>
+  <link rel="icon" href="/static/assets/apple-icon.jpeg">
+  <link rel="stylesheet" href="/static/css/reset.css">
+  <link rel="stylesheet" href="/static/css/variables.css">
+  <link rel="stylesheet" href="/static/css/animations.css">
+  <link rel="stylesheet" href="/static/css/admin-worklog.css">
+  <link rel="stylesheet" href="/static/css/responsive.css">
+  <style>
+    .content-wrapper {
+      height: 100vh;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      box-sizing: border-box;
+    }
+
+    .profile-breadcrumb {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.25rem 0.75rem;
+      background: rgba(139, 92, 246, 0.08);
+      color: #8b5cf6;
+      font-size: 0.75rem;
+      font-weight: 700;
+      border-radius: 9999px;
+      margin-bottom: 0.75rem;
+    }
+    .profile-breadcrumb svg { width: 12px; height: 12px; }
+
+    .profile-page-title {
+      font-size: 2rem;
+      font-weight: 900;
+      color: #0f172a;
+      margin: 0 0 0.375rem;
+      letter-spacing: -0.02em;
+    }
+    .profile-page-subtitle {
+      font-size: 0.875rem;
+      color: #64748b;
+      margin: 0 0 1.5rem;
+    }
+
+    .profile-page-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1.25rem;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .profile-page-grid { grid-template-columns: 1fr; }
+    }
+
+    .pf-card {
+      background: white;
+      border-radius: 1.25rem;
+      border: 1px solid #eef0f4;
+      box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.08);
+      padding: 1.75rem;
+    }
+
+    .pf-top-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    .pf-avatar {
+      width: 5rem;
+      height: 5rem;
+      border-radius: 1.25rem;
+      background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.75rem;
+      font-weight: 800;
+      position: relative;
+      flex-shrink: 0;
+      box-shadow: 0 10px 20px -6px rgba(139, 92, 246, 0.5);
+      overflow: hidden;
+    }
+    .pf-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .pf-avatar-dot {
+      position: absolute;
+      bottom: -2px;
+      left: -2px;
+      width: 0.9rem;
+      height: 0.9rem;
+      border-radius: 50%;
+      background: #22c55e;
+      border: 3px solid white;
+    }
+
+    .pf-header-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .pf-btn-ghost {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.5rem 0.875rem;
+      border-radius: 0.75rem;
+      border: 1px solid #e5e7eb;
+      background: white;
+      color: #7c3aed;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .pf-btn-ghost:hover {
+      background: #faf5ff;
+      border-color: #d8b4fe;
+    }
+    .pf-btn-ghost svg { width: 13px; height: 13px; }
+
+    .pf-name {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 0 0 0.125rem;
+    }
+    .pf-role-line {
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: #8b5cf6;
+      margin: 0 0 0.625rem;
+    }
+    .pf-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      background: #d1fae5;
+      color: #047857;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .pf-status-dot {
+      width: 0.4rem;
+      height: 0.4rem;
+      border-radius: 50%;
+      background: #10b981;
+    }
+
+    .pf-info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+    @media (max-width: 520px) {
+      .pf-info-grid { grid-template-columns: 1fr; }
+    }
+    .pf-info-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.875rem 1rem;
+      background: #f8f8fb;
+      border-radius: 0.875rem;
+    }
+    .pf-info-icon {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 0.625rem;
+      background: white;
+      border: 1px solid #eceef2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: #8b5cf6;
+    }
+    .pf-info-icon svg { width: 15px; height: 15px; }
+    .pf-info-label {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin: 0 0 0.125rem;
+    }
+    .pf-info-value {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: #1e293b;
+      word-break: break-word;
+    }
+
+    .pf-stats-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9375rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 0 0 0.125rem;
+    }
+    .pf-stats-title svg { width: 16px; height: 16px; color: #8b5cf6; }
+    .pf-stats-subtitle {
+      font-size: 0.6875rem;
+      color: #94a3b8;
+      margin: 0 0 1.25rem;
+    }
+
+    .pf-rings-row {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 1.25rem;
+    }
+    .pf-ring-wrap { text-align: center; }
+    .pf-ring {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 0.5rem;
+    }
+    .pf-ring svg { transform: rotate(-90deg); }
+    .pf-ring-bg { fill: none; stroke: #f1f2f6; stroke-width: 7; }
+    .pf-ring-progress {
+      fill: none;
+      stroke-width: 7;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.6s ease;
+    }
+    .pf-ring-text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9375rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+    .pf-ring-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #64748b;
+    }
+
+    .pf-quick-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    .pf-quick-stat {
+      background: #f8f8fb;
+      border-radius: 0.875rem;
+      padding: 0.875rem;
+    }
+    .pf-quick-stat-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.375rem;
+    }
+    .pf-quick-stat-icon {
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .pf-quick-stat-icon svg { width: 12px; height: 12px; }
+    .pf-quick-stat-value {
+      font-size: 1.375rem;
+      font-weight: 900;
+      color: #0f172a;
+      line-height: 1;
+    }
+    .pf-quick-stat-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: #94a3b8;
+      margin-top: 0.25rem;
+    }
+
+    /* ---- New: styled photo picker in Edit Profile modal ---- */
+    .pf-photo-picker-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+      padding: 1rem;
+      background: #f8f8fb;
+      border-radius: 1rem;
+      border: 1px dashed #d8d3ff;
+    }
+    .pf-photo-preview {
+      width: 4.5rem;
+      height: 4.5rem;
+      border-radius: 1rem;
+      background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 800;
+      font-size: 1.25rem;
+      overflow: hidden;
+      flex-shrink: 0;
+      box-shadow: 0 8px 16px -6px rgba(139, 92, 246, 0.45);
+    }
+    .pf-photo-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .pf-photo-picker-actions {
+      flex: 1;
+      min-width: 0;
+    }
+    .pf-photo-picker-label {
+      display: block;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      color: #64748b;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .pf-photo-buttons {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .pf-choose-photo-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.5rem 0.9rem;
+      background: linear-gradient(135deg, #8b5cf6, #d946ef);
+      color: white;
+      border: none;
+      border-radius: 0.65rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .pf-choose-photo-btn:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+    .pf-choose-photo-btn svg { width: 14px; height: 14px; }
+    .pf-remove-photo-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.5rem 0.75rem;
+      background: white;
+      color: #ef4444;
+      border: 1px solid #fecaca;
+      border-radius: 0.65rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .pf-remove-photo-btn:hover { background: #fef2f2; }
+    .pf-remove-photo-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .pf-remove-photo-btn.hidden { display: none; }
+    .pf-photo-filename {
+      display: block;
+      margin-top: 0.375rem;
+      font-size: 0.6875rem;
+      color: #94a3b8;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <!-- Mobile Menu Toggle -->
+  <button id="mobileMenuToggle" class="mobile-menu-toggle">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+  <div id="mobileBackdrop" class="mobile-backdrop"></div>
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+      <a href="/" class="sidebar-logo">
+        <div class="logo-box"><span id="logoInitials">HA</span></div>
+        <span id="sidebarCompanyName" class="company-name">HAEGL</span>
+      </a>
+      <button id="collapseBtn" class="collapse-btn" title="Collapse sidebar">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+    </div>
+
+    <div class="role-badge">
+      <div class="role-dot"></div>
+      <span>Employee</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="/employee/worklog/" class="nav-link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="3" y1="9" x2="21" y2="9"></line>
+          <line x1="9" y1="21" x2="9" y2="9"></line>
+        </svg>
+        <span>Work Log</span>
+      </a>
+      <a href="/employee/chat/" class="nav-link">
+        <div class="relative">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span id="chatBadge" class="chat-badge hidden">0</span>
+        </div>
+        <span>Chat</span>
+      </a>
+      <a href="/employee/profile/" class="nav-link active">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        <span>Profile</span>
+        <div class="active-indicator"></div>
+      </a>
+      <a href="/employee/attendance/" class="nav-link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+          <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+        <span>Attendance</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button onclick="handleLogout()" class="logout-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        <span>Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content page-bg">
+    <div class="content-wrapper">
+
+      <div class="profile-breadcrumb">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        My Profile
+      </div>
+      <h1 class="profile-page-title">Profile</h1>
+      <p class="profile-page-subtitle">View and manage your profile information</p>
+
+      <div class="profile-page-grid">
+
+        <!-- Left: Profile card -->
+        <div class="pf-card">
+          <div class="pf-top-row">
+            <div class="pf-avatar" id="pfAvatar">
+              <span id="pfAvatarInitials">—</span>
+              <div class="pf-avatar-dot"></div>
+            </div>
+            <div class="pf-header-actions">
+              <button class="pf-btn-ghost" id="openEditBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"></path></svg>
+                Edit Profile
+              </button>
+              <button class="pf-btn-ghost" id="openPasswordBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                Change Password
+              </button>
+            </div>
+          </div>
+
+          <h2 class="pf-name" id="pfName">Loading...</h2>
+          <p class="pf-role-line" id="pfRoleLine"></p>
+          <span class="pf-status-badge"><span class="pf-status-dot"></span>Active</span>
+
+          <div class="pf-info-grid">
+            <div class="pf-info-item">
+              <div class="pf-info-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z" opacity="0"></path><path d="M22 6l-10 7L2 6"></path><rect x="2" y="4" width="20" height="16" rx="2"></rect></svg></div>
+              <div><p class="pf-info-label">Email</p><p class="pf-info-value" id="pfEmail">—</p></div>
+            </div>
+            <div class="pf-info-item">
+              <div class="pf-info-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="14" rx="1"></rect><path d="M7 7V4a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v3"></path></svg></div>
+              <div><p class="pf-info-label">Department</p><p class="pf-info-value" id="pfDepartment">—</p></div>
+            </div>
+            <div class="pf-info-item">
+              <div class="pf-info-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7h-9M14 17H5"></path><circle cx="17" cy="17" r="3"></circle><circle cx="7" cy="7" r="3"></circle></svg></div>
+              <div><p class="pf-info-label">Designation</p><p class="pf-info-value" id="pfDesignation">—</p></div>
+            </div>
+            <div class="pf-info-item">
+              <div class="pf-info-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg></div>
+              <div><p class="pf-info-label">Employee ID</p><p class="pf-info-value" id="pfEmpId">—</p></div>
+            </div>
+            <div class="pf-info-item">
+              <div class="pf-info-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></div>
+              <div><p class="pf-info-label">Phone</p><p class="pf-info-value" id="pfPhone">—</p></div>
+            </div>
+            <div class="pf-info-item">
+              <div class="pf-info-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div>
+              <div><p class="pf-info-label">Role</p><p class="pf-info-value" id="pfRole">—</p></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Performance card -->
+        <div class="pf-card">
+          <div class="pf-stats-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+            Performance Overview
+          </div>
+          <p class="pf-stats-subtitle">from Work Log</p>
+
+          <div class="pf-rings-row">
+            <div class="pf-ring-wrap">
+              <div class="pf-ring">
+                <svg width="80" height="80">
+                  <circle class="pf-ring-bg" cx="40" cy="40" r="34"></circle>
+                  <circle id="completionRing" class="pf-ring-progress" cx="40" cy="40" r="34" stroke="#10b981" stroke-dasharray="213.6" stroke-dashoffset="213.6"></circle>
+                </svg>
+                <span class="pf-ring-text" id="completionRateText">0%</span>
+              </div>
+              <span class="pf-ring-label">Completion Rate</span>
+            </div>
+            <div class="pf-ring-wrap">
+              <div class="pf-ring">
+                <svg width="80" height="80">
+                  <circle class="pf-ring-bg" cx="40" cy="40" r="34"></circle>
+                  <circle id="approvalRing" class="pf-ring-progress" cx="40" cy="40" r="34" stroke="#8b5cf6" stroke-dasharray="213.6" stroke-dashoffset="213.6"></circle>
+                </svg>
+                <span class="pf-ring-text" id="approvalRateText">0%</span>
+              </div>
+              <span class="pf-ring-label">Approval Rate</span>
+            </div>
+          </div>
+
+          <div class="pf-quick-stats">
+            <div class="pf-quick-stat">
+              <div class="pf-quick-stat-top">
+                <div class="pf-quick-stat-icon" style="background:#ede9fe;color:#7c3aed;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                </div>
+              </div>
+              <div class="pf-quick-stat-value" id="statTotal">0</div>
+              <div class="pf-quick-stat-label">Total Entries</div>
+            </div>
+            <div class="pf-quick-stat">
+              <div class="pf-quick-stat-top">
+                <div class="pf-quick-stat-icon" style="background:#d1fae5;color:#059669;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+              </div>
+              <div class="pf-quick-stat-value" id="statCompleted" style="color:#059669;">0</div>
+              <div class="pf-quick-stat-label">Completed</div>
+            </div>
+            <div class="pf-quick-stat">
+              <div class="pf-quick-stat-top">
+                <div class="pf-quick-stat-icon" style="background:#ede9fe;color:#7c3aed;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 6l-9.5 9.5-5-5L1 18"></path></svg>
+                </div>
+              </div>
+              <div class="pf-quick-stat-value" id="statApproved" style="color:#7c3aed;">0</div>
+              <div class="pf-quick-stat-label">Approved</div>
+            </div>
+            <div class="pf-quick-stat">
+              <div class="pf-quick-stat-top">
+                <div class="pf-quick-stat-icon" style="background:#fef3c7;color:#b45309;">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                </div>
+              </div>
+              <div class="pf-quick-stat-value" id="statPending" style="color:#b45309;">0</div>
+              <div class="pf-quick-stat-label">Pending Review</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Edit Profile Modal -->
+  <div id="editModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"></path></svg>
+          Edit Profile
+        </h2>
+        <button id="editModalClose" class="modal-close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <form id="editForm">
+        <div class="modal-body">
+
+          <!-- Styled photo picker -->
+          <div class="pf-photo-picker-row">
+            <div class="pf-photo-preview" id="editAvatarPreview">
+              <span id="editAvatarInitials">—</span>
+            </div>
+            <div class="pf-photo-picker-actions">
+              <span class="pf-photo-picker-label">Profile Picture</span>
+              <div class="pf-photo-buttons">
+                <button type="button" class="pf-choose-photo-btn" id="choosePhotoBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                  Choose Photo
+                </button>
+                <button type="button" class="pf-remove-photo-btn hidden" id="removePhotoBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                  Remove
+                </button>
+              </div>
+              <span class="pf-photo-filename" id="photoFilename"></span>
+              <input type="file" id="fPicture" accept="image/*" style="display:none;">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="fFullName" class="input" placeholder="Your full name" required>
+          </div>
+          <div class="form-group">
+            <label>Email <span style="text-transform:none;color:#94a3b8;font-weight:500;">(cannot be changed)</span></label>
+            <input type="email" id="fEmail" class="input" disabled style="background:#f3f4f6;color:#94a3b8;">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="tel" id="fPhone" class="input" placeholder="Phone number">
+            </div>
+            <div class="form-group">
+              <label>Department</label>
+              <input type="text" id="fDepartment" class="input" placeholder="Department">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Designation</label>
+            <input type="text" id="fDesignation" class="input" placeholder="Designation">
+          </div>
+        </div>
+        <div class="modal-footer" style="padding: 0 1.25rem 1.25rem;">
+          <button type="submit" id="editSubmitBtn" class="submit-btn">Save Changes</button>
+          <button type="button" id="editCancelBtn" class="cancel-btn">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Change Password Modal -->
+  <div id="passwordModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          Change Password
+        </h2>
+        <button id="passwordModalClose" class="modal-close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <form id="passwordForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Current Password</label>
+            <input type="password" id="currentPassword" class="input" required>
+          </div>
+          <div class="form-group">
+            <label>New Password</label>
+            <input type="password" id="newPassword" class="input" required minlength="8">
+          </div>
+          <div class="form-group">
+            <label>Confirm New Password</label>
+            <input type="password" id="confirmPassword" class="input" required minlength="8">
+          </div>
+        </div>
+        <div class="modal-footer" style="padding: 0 1.25rem 1.25rem;">
+          <button type="submit" id="passwordSubmitBtn" class="submit-btn">Update Password</button>
+          <button type="button" id="passwordCancelBtn" class="cancel-btn">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toastContainer"></div>
+
+  <!-- Scripts -->
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/auth.js"></script>
+  <script src="/static/js/chat-notifications-widget.js"></script>
+  <script>
+    requireEmployee();
+
+    let currentUser = {};
+    let workEntries = [];
+    let selectedPhotoFile = null;
+    let selectedPhotoPreviewUrl = null; // local object URL for instant preview
+    // True once the user clicks "Remove" in this modal session and hasn't
+    // since chosen a new file. This is what actually gets sent to the
+    // backend as `remove_photo` on save — previously handleRemovePhoto()
+    // only cleared the local preview/file-input, so Save never told the
+    // server to delete the photo, and the old photo kept showing up
+    // everywhere else (admin employee list, chat) since those all read
+    // the same DB field fresh on every load.
+    let photoRemoved = false;
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      const icon = type === 'success'
+        ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>'
+        : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
+      toast.innerHTML = `${icon}<span style="font-weight:600;">${escapeHtml(message)}</span>`;
+      document.getElementById('toastContainer').appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    function setRingProgress(elId, pct) {
+      const circumference = 213.6;
+      const el = document.getElementById(elId);
+      if (!el) return;
+      const clamped = Math.max(0, Math.min(100, pct));
+      el.style.strokeDashoffset = String(circumference - (clamped / 100) * circumference);
+    }
+
+    // Renders the MAIN avatar box (top of profile card).
+    // photoUrlOverride lets us show a picture immediately after save,
+    // even before/without waiting on a fresh server response.
+    // Pass explicitNull=true to force showing initials even if
+    // currentUser/profile still has a stale photo value cached.
+    function renderAvatar(user, photoUrlOverride, explicitNull) {
+      const initials = getUserInitials(user.full_name || user.first_name || 'User');
+      const profile = user.profile || {};
+      const photo = explicitNull ? null : (photoUrlOverride || profile.photo || user.photo || null);
+      const avatarEl = document.getElementById('pfAvatar');
+      if (photo) {
+        avatarEl.innerHTML = `<img src="${photo}" alt="avatar"><div class="pf-avatar-dot"></div>`;
+      } else {
+        avatarEl.innerHTML = `<span id="pfAvatarInitials">${initials}</span><div class="pf-avatar-dot"></div>`;
+      }
+    }
+
+    function renderProfile(user, photoUrlOverride, explicitNull) {
+      currentUser = user;
+      const profile = user.profile || {};
+
+      renderAvatar(user, photoUrlOverride, explicitNull);
+      document.getElementById('pfName').textContent = user.full_name || user.first_name || 'User';
+      document.getElementById('pfRoleLine').textContent =
+        [profile.designation, profile.department].filter(Boolean).join(' • ') || '—';
+
+      document.getElementById('pfEmail').textContent = user.email || '—';
+      document.getElementById('pfDepartment').textContent = profile.department || '—';
+      document.getElementById('pfDesignation').textContent = profile.designation || '—';
+      document.getElementById('pfEmpId').textContent = profile.employee_id || '—';
+      document.getElementById('pfPhone').textContent = profile.phone || 'Not provided';
+      document.getElementById('pfRole').textContent = profile.is_admin ? 'Admin' : 'Employee';
+    }
+
+    function renderStats() {
+      const total = workEntries.length;
+      const completed = workEntries.filter(e => e.status === 'completed').length;
+      const approved = workEntries.filter(e => e.review_status === 'approved').length;
+      const pending = workEntries.filter(e => e.review_status === 'pending').length;
+      const rejected = workEntries.filter(e => e.review_status === 'rejected').length;
+      const reviewed = approved + rejected;
+
+      const completionPct = total > 0 ? Math.round((completed / total) * 100) : 0;
+      const approvalPct = reviewed > 0 ? Math.round((approved / reviewed) * 100) : 0;
+
+      setRingProgress('completionRing', completionPct);
+      setRingProgress('approvalRing', approvalPct);
+      document.getElementById('completionRateText').textContent = `${completionPct}%`;
+      document.getElementById('approvalRateText').textContent = `${approvalPct}%`;
+
+      document.getElementById('statTotal').textContent = total;
+      document.getElementById('statCompleted').textContent = completed;
+      document.getElementById('statApproved').textContent = approved;
+      document.getElementById('statPending').textContent = pending;
+    }
+
+    // Renders the small preview box inside the Edit Profile modal.
+    function renderEditPreview(photoUrl, initials) {
+      const previewEl = document.getElementById('editAvatarPreview');
+      const removeBtn = document.getElementById('removePhotoBtn');
+      if (photoUrl) {
+        previewEl.innerHTML = `<img src="${photoUrl}" alt="preview">`;
+        removeBtn.classList.remove('hidden');
+      } else {
+        previewEl.innerHTML = `<span id="editAvatarInitials">${initials}</span>`;
+        removeBtn.classList.add('hidden');
+      }
+    }
+
+    // ===== Edit Profile modal =====
+    function openEditModal() {
+      const profile = currentUser.profile || {};
+      document.getElementById('fFullName').value = currentUser.full_name || currentUser.first_name || '';
+      document.getElementById('fEmail').value = currentUser.email || '';
+      document.getElementById('fPhone').value = profile.phone || '';
+      document.getElementById('fDepartment').value = profile.department || '';
+      document.getElementById('fDesignation').value = profile.designation || '';
+      document.getElementById('fPicture').value = '';
+      document.getElementById('photoFilename').textContent = '';
+
+      selectedPhotoFile = null;
+      photoRemoved = false;
+      if (selectedPhotoPreviewUrl) {
+        URL.revokeObjectURL(selectedPhotoPreviewUrl);
+        selectedPhotoPreviewUrl = null;
+      }
+
+      const existingPhoto = profile.photo || currentUser.photo || null;
+      const initials = getUserInitials(currentUser.full_name || currentUser.first_name || 'User');
+      renderEditPreview(existingPhoto, initials);
+
+      document.getElementById('editModal').classList.remove('hidden');
+    }
+    function closeEditModal() {
+      document.getElementById('editModal').classList.add('hidden');
+    }
+
+    function handlePhotoFileChange(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (!file.type.startsWith('image/')) {
+        showToast('Please choose an image file', 'error');
+        e.target.value = '';
+        return;
+      }
+
+      selectedPhotoFile = file;
+      photoRemoved = false; // choosing a new file cancels a pending removal
+      if (selectedPhotoPreviewUrl) URL.revokeObjectURL(selectedPhotoPreviewUrl);
+      selectedPhotoPreviewUrl = URL.createObjectURL(file);
+
+      renderEditPreview(selectedPhotoPreviewUrl, getUserInitials(currentUser.full_name || 'User'));
+      document.getElementById('photoFilename').textContent = file.name;
+    }
+
+    function handleRemovePhoto() {
+      selectedPhotoFile = null;
+      photoRemoved = true;
+      if (selectedPhotoPreviewUrl) {
+        URL.revokeObjectURL(selectedPhotoPreviewUrl);
+        selectedPhotoPreviewUrl = null;
+      }
+      document.getElementById('fPicture').value = '';
+      document.getElementById('photoFilename').textContent = '';
+      const initials = getUserInitials(currentUser.full_name || currentUser.first_name || 'User');
+      renderEditPreview(null, initials);
+    }
+
+    async function handleEditSubmit(e) {
+      e.preventDefault();
+      const btn = document.getElementById('editSubmitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+
+      const formData = new FormData();
+      formData.append('full_name', document.getElementById('fFullName').value);
+      formData.append('phone', document.getElementById('fPhone').value);
+      formData.append('department', document.getElementById('fDepartment').value);
+      formData.append('designation', document.getElementById('fDesignation').value);
+      if (selectedPhotoFile) {
+        formData.append('profile_picture', selectedPhotoFile);
+      } else if (photoRemoved) {
+        // Tell the backend to actually delete the stored photo — this is
+        // what was missing before. Without this, the DB field (and file)
+        // never changed, so every other page reading it fresh (admin
+        // employee list, chat) kept showing the old photo forever.
+        formData.append('remove_photo', 'true');
+      }
+
+      // Keep the locally chosen preview around so we can show it
+      // immediately after a successful save, even if the server
+      // response is slow to reflect the new photo URL.
+      const localPreviewForAfterSave = selectedPhotoPreviewUrl;
+      const wasRemoved = photoRemoved;
+
+      try {
+        const result = await updateProfile(formData);
+        if (result && result.error) {
+          showToast(result.error, 'error');
+        } else {
+          // Show the picture right away using whatever we can find:
+          // 1) a photo URL directly in the update response,
+          // 2) our local object URL from the chosen file,
+          // 3) fall through to whatever getMe() returns next.
+          // If the photo was explicitly removed, force initials instead
+          // of falling back to any stale cached photo value.
+          const immediatePhoto = wasRemoved
+            ? null
+            : ((result && (result.photo || (result.profile && result.profile.photo))) ||
+               localPreviewForAfterSave ||
+               null);
+
+          renderAvatar(currentUser, immediatePhoto, wasRemoved);
+
+          const fresh = await getMe();
+          if (fresh && !fresh.error) {
+            localStorage.setItem('user', JSON.stringify(fresh));
+            const freshProfile = fresh.profile || {};
+            const freshPhoto = wasRemoved ? null : (freshProfile.photo || fresh.photo || immediatePhoto);
+            renderProfile(fresh, freshPhoto, wasRemoved);
+          }
+
+          showToast(wasRemoved ? 'Profile photo removed!' : 'Profile updated successfully!', 'success');
+          closeEditModal();
+        }
+      } catch (err) {
+        console.error('Profile update failed:', err);
+        showToast('Failed to update profile', 'error');
+      }
+      btn.disabled = false;
+      btn.textContent = 'Save Changes';
+    }
+
+    // ===== Change Password modal =====
+    function openPasswordModal() {
+      document.getElementById('passwordForm').reset();
+      document.getElementById('passwordModal').classList.remove('hidden');
+    }
+    function closePasswordModal() {
+      document.getElementById('passwordModal').classList.add('hidden');
+    }
+
+    async function handlePasswordSubmit(e) {
+      e.preventDefault();
+      const current = document.getElementById('currentPassword').value;
+      const next = document.getElementById('newPassword').value;
+      const confirm = document.getElementById('confirmPassword').value;
+
+      if (next !== confirm) { showToast('New passwords do not match', 'error'); return; }
+      if (next.length < 8) { showToast('Password must be at least 8 characters', 'error'); return; }
+
+      const btn = document.getElementById('passwordSubmitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Updating...';
+
+      try {
+        const result = await changePassword(current, next);
+        if (result.error) {
+          showToast(result.error, 'error');
+        } else {
+          showToast('Password changed successfully!', 'success');
+          closePasswordModal();
+        }
+      } catch (err) {
+        showToast('Failed to change password', 'error');
+      }
+      btn.disabled = false;
+      btn.textContent = 'Update Password';
+    }
+
+    // ===== Sidebar =====
+    function setupSidebar() {
+      document.getElementById('mobileMenuToggle').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('mobileBackdrop').classList.toggle('show');
+      });
+      document.getElementById('mobileBackdrop').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('mobileBackdrop').classList.remove('show');
+      });
+      document.getElementById('collapseBtn').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+      });
+      const companyName = getCompanyName();
+      document.getElementById('sidebarCompanyName').textContent = companyName;
+      document.getElementById('logoInitials').textContent =
+        companyName.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+    }
+
+    async function loadChatBadge() {
+      try {
+        const data = await getUnreadCount();
+        if (data.total_unread > 0) {
+          const badge = document.getElementById('chatBadge');
+          badge.textContent = data.total_unread > 99 ? '99+' : data.total_unread;
+          badge.classList.remove('hidden');
+        }
+      } catch {}
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      setupSidebar();
+
+      const stored = getCurrentUser();
+      if (stored) renderProfile(stored);
+
+      document.getElementById('openEditBtn').addEventListener('click', openEditModal);
+      document.getElementById('editModalClose').addEventListener('click', closeEditModal);
+      document.getElementById('editCancelBtn').addEventListener('click', closeEditModal);
+      document.getElementById('editForm').addEventListener('submit', handleEditSubmit);
+
+      document.getElementById('choosePhotoBtn').addEventListener('click', () => {
+        document.getElementById('fPicture').click();
+      });
+      document.getElementById('fPicture').addEventListener('change', handlePhotoFileChange);
+      document.getElementById('removePhotoBtn').addEventListener('click', handleRemovePhoto);
+
+      document.getElementById('openPasswordBtn').addEventListener('click', openPasswordModal);
+      document.getElementById('passwordModalClose').addEventListener('click', closePasswordModal);
+      document.getElementById('passwordCancelBtn').addEventListener('click', closePasswordModal);
+      document.getElementById('passwordForm').addEventListener('submit', handlePasswordSubmit);
+
+      loadChatBadge();
+
+      try {
+        const [freshUser, entries] = await Promise.all([getMe(), getWorkEntries()]);
+        if (freshUser && !freshUser.error) {
+          localStorage.setItem('user', JSON.stringify(freshUser));
+          renderProfile(freshUser);
+        }
+        workEntries = Array.isArray(entries) ? entries : [];
+        renderStats();
+      } catch (err) {
+        console.error('Failed to load profile data:', err);
+      }
+    });
+  </script>
+</body>
+</html>

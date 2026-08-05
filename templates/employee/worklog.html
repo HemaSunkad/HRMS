@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Work Log - Employee - WorkTrack</title>
+  <link rel="icon" href="/static/assets/apple-icon.jpeg">
+  <link rel="stylesheet" href="/static/css/reset.css">
+  <link rel="stylesheet" href="/static/css/variables.css">
+  <link rel="stylesheet" href="/static/css/animations.css">
+  <link rel="stylesheet" href="/static/css/admin-worklog.css">
+  <link rel="stylesheet" href="/static/css/responsive.css">
+  <style>
+    /* ===== Page-specific additions on top of admin-worklog.css ===== */
+
+    .content-wrapper {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    @media (min-width: 1024px) {
+      .content-wrapper {
+        padding: 0.875rem 1.5rem;
+      }
+    }
+
+    /* ---- Thinner header/greeting bar (scoped to this page only) ---- */
+    .header-card {
+      margin-bottom: 0 !important;
+      flex-shrink: 0;
+    }
+    .header-content {
+      padding: 0.5rem 1.25rem !important;
+    }
+    .company-label {
+      font-size: 0.5rem !important;
+      margin-bottom: 0.125rem !important;
+    }
+    .greeting-emoji {
+      font-size: 0.9375rem !important;
+    }
+    .greeting-text {
+      font-size: 0.9375rem !important;
+    }
+    .time-badge {
+      padding: 0.1875rem 0.5rem !important;
+      font-size: 0.625rem !important;
+    }
+    .date-text {
+      font-size: 0.625rem !important;
+    }
+    .header-bottom {
+      margin-top: 0.5rem !important;
+    }
+    .stat-badge {
+      padding: 0.25rem 0.5rem !important;
+    }
+    .assign-task-btn {
+      padding: 0.375rem 0.875rem !important;
+    }
+
+    /* ---- Assigned tasks strip (kept compact so it doesn't eat table space) ---- */
+    .assigned-card {
+      background: white;
+      border-radius: 1rem;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.06);
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .assigned-header {
+      width: 100%;
+      padding: 0.5rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .assigned-header:hover {
+      background: #faf5ff;
+    }
+    /* ---- Assigned-tasks count: styled as a red notification badge,
+       the same treatment as an unread chat-message count, so a new
+       task from the manager reads as an "alert" the same way a new
+       message does — not just another neutral pill. ---- */
+    .assigned-notify-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 1.25rem;
+      height: 1.25rem;
+      padding: 0 0.4rem;
+      border-radius: 999px;
+      background: #ef4444;
+      color: #fff;
+      font-size: 0.6875rem;
+      font-weight: 800;
+      line-height: 1;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+      animation: assignedBadgePulse 2s ease-in-out infinite;
+    }
+    @keyframes assignedBadgePulse {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15); }
+      50% { box-shadow: 0 0 0 5px rgba(239, 68, 68, 0.28); }
+    }
+    .assigned-list {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    .assigned-list.open {
+      max-height: 320px;
+      overflow-y: auto;
+    }
+    .assigned-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.75rem 1.25rem;
+      border-top: 1px solid #f9fafb;
+    }
+    .assigned-row:hover {
+      background: #faf5ff;
+    }
+
+    /* ---- Table gets the remaining space, with its own visible scrollbar ---- */
+    .table-card {
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+
+    /* ---- Scroll wrapper: holds the table-container plus the left/right
+       edge-fade overlays that hint there's more content to scroll to
+       (mainly relevant on mobile / narrow viewports). ---- */
+    .table-scroll-wrapper {
+      position: relative;
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+    }
+
+    .table-container {
+      overflow: auto;
+      flex: 1;
+      min-height: 0;
+      scrollbar-width: auto;
+      scrollbar-color: #8b5cf6 #f3f4f6;
+      /* momentum/smooth scrolling on touch devices */
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+    }
+    .table-container::-webkit-scrollbar {
+      width: 12px;
+      height: 12px;
+    }
+    .table-container::-webkit-scrollbar-track {
+      background: #f3f4f6;
+    }
+    .table-container::-webkit-scrollbar-thumb {
+      background: #8b5cf6;
+      border-radius: 6px;
+      border: 3px solid #f3f4f6;
+    }
+    .table-container::-webkit-scrollbar-thumb:hover {
+      background: #7c3aed;
+    }
+
+    /* Edge fade overlays — fixed to the wrapper so they stay pinned to
+       the visible left/right edges regardless of scroll position. */
+    .scroll-fade {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 28px;
+      pointer-events: none;
+      z-index: 5;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    .scroll-fade-left {
+      left: 0;
+      background: linear-gradient(to right, rgba(255,255,255,0.97), rgba(255,255,255,0));
+    }
+    .scroll-fade-right {
+      right: 0;
+      background: linear-gradient(to left, rgba(255,255,255,0.97), rgba(255,255,255,0));
+    }
+    .scroll-fade.visible {
+      opacity: 1;
+    }
+
+    /* Make sure every table cell wraps and stays fully readable —
+       nothing gets clipped or ellipsis-truncated. */
+    .worklog-table td {
+      white-space: normal;
+      word-break: break-word;
+      vertical-align: top;
+    }
+    .worklog-table td.nowrap-cell {
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+    .worklog-table th {
+      vertical-align: middle;
+    }
+
+    /* Zebra striping + stronger row separation for readability */
+    .worklog-table tbody tr:nth-child(even) {
+      background: #fafafa;
+    }
+    .worklog-table tbody tr {
+      border-bottom: 1px solid #eef0f3;
+    }
+    .worklog-table tbody tr:hover {
+      background: #f5f0ff;
+    }
+
+    /* Column dividers so rows/columns are visually crisp */
+    .worklog-table th,
+    .worklog-table td {
+      border-right: 1px solid #f1f2f4;
+    }
+    .worklog-table th:last-child,
+    .worklog-table td:last-child {
+      border-right: none;
+    }
+
+    .no-time-cell {
+      color: #d1d5db;
+      font-weight: 700;
+    }
+
+    /* ---- Task column: compact, clamped presentation — wrapped as
+       short paragraphs instead of forcing every word onto its own
+       line and blowing up row height. Long text is clamped to 3
+       lines with overflow hidden. ---- */
+    .worklog-table td:nth-child(3) { /* Task */
+      min-width: 200px;
+      max-width: 320px;
+    }
+    /* ---- Remark / Admin Comment columns: kept deliberately narrow —
+       these are secondary info with a click-to-preview popover for the
+       full text, so they don't need to eat table width. No min-width,
+       so rows that are just "—" stay even narrower. ---- */
+    .worklog-table td:nth-child(10),  /* Remark */
+    .worklog-table td:nth-child(12) { /* Admin Comment */
+      max-width: 150px;
+    }
+    /* ---- Reassigned column: shrink-to-fit AND capped — never wider
+       than its content actually needs, whether that's "—" or "→ Name",
+       and long names get truncated with an ellipsis rather than
+       stretching the column. ---- */
+    .reassigned-cell {
+      width: 1%;
+      max-width: 130px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .task-text {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.45;
+      word-break: normal;
+      overflow-wrap: break-word;
+      white-space: pre-wrap;
+      margin: 0;
+    }
+    .comment-display {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.4;
+      word-break: normal;
+      overflow-wrap: break-word;
+      white-space: pre-wrap;
+      margin: 0;
+    }
+    .comment-display.empty {
+      color: #cbd5e1;
+      font-weight: 700;
+      -webkit-line-clamp: 1;
+    }
+
+    /* ---- Task/Remark/Comment cell click-to-preview: Task, Remark, and
+       Admin Comment columns all get this treatment. Same behavior on
+       mobile as on desktop. ---- */
+    .task-clickable,
+    .remark-clickable,
+    .comment-clickable {
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+    .task-clickable:hover,
+    .remark-clickable:hover,
+    .comment-clickable:hover {
+      color: #7c3aed;
+    }
+    td.task-cell-active {
+      background: #f5f3ff !important;
+    }
+
+    .task-popover {
+      position: fixed;
+      z-index: 1000;
+      background: #1e293b;
+      color: #f8fafc;
+      padding: 0.75rem 1rem;
+      border-radius: 0.75rem;
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.25), 0 8px 10px -6px rgba(0,0,0,0.15);
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: opacity 0.15s ease, transform 0.15s ease;
+      word-break: break-word;
+      white-space: pre-wrap;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+    .task-popover.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .task-popover::before {
+      content: '';
+      position: absolute;
+      top: -6px;
+      left: 20px;
+      width: 12px;
+      height: 12px;
+      background: #1e293b;
+      transform: rotate(45deg);
+    }
+    .task-popover.arrow-bottom::before {
+      top: auto;
+      bottom: -6px;
+      transform: rotate(225deg);
+    }
+
+    /* ---- Action button icons: consistent sizing/spacing for all 4 actions ---- */
+    .action-buttons {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      flex-wrap: nowrap;
+    }
+    .action-btn svg {
+      display: block;
+    }
+
+    /* Action button colors — matches the admin work log page's
+       Approve (green) / Reject (red) / Reassign (purple) styling,
+       plus a distinct Edit (blue) so it's not confused with Reassign. */
+    .action-btn {
+      width: 1.875rem;
+      height: 1.875rem;
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .action-btn.approve {
+      background: #dcfce7;
+      color: #16a34a;
+      border: 1px solid #bbf7d0;
+    }
+    .action-btn.approve:hover { background: #bbf7d0; }
+
+    .action-btn.reject {
+      background: #fee2e2;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+    }
+    .action-btn.reject:hover { background: #fecaca; }
+
+    .action-btn.reassign {
+      background: #ede9fe;
+      color: #7c3aed;
+      border: 1px solid #ddd6fe;
+    }
+    .action-btn.reassign:hover { background: #ddd6fe; }
+
+    .action-btn.edit {
+      background: #dbeafe;
+      color: #2563eb;
+      border: 1px solid #bfdbfe;
+    }
+    .action-btn.edit:hover { background: #bfdbfe; }
+
+    .action-btn.pause {
+      background: #fff7ed;
+      color: #ea580c;
+      border: 1px solid #fed7aa;
+    }
+    .action-btn.pause:hover { background: #fed7aa; }
+
+    /* Status badge colors */
+    .status-badge.paused {
+      background: #fff7ed;
+      color: #ea580c;
+      border: 1px solid #fed7aa;
+    }
+
+    .paused-timer {
+      font-weight: 600;
+      color: #ea580c;
+    }
+
+    /* ---- Total paused time note (shown under the live timer while an
+       entry is in progress, and under the Result badge once it's
+       completed) — mirrors the admin work log page. ---- */
+    .paused-total-note {
+      margin-top: 2px;
+      font-size: 0.72rem;
+      color: #ea580c;
+      font-weight: 600;
+    }
+
+    /* Reassign modal user list */
+    .reassign-user-list {
+      max-height: 320px;
+      overflow-y: auto;
+    }
+    .reassign-user-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      border-radius: 0.75rem;
+      border: 1px solid #e5e7eb;
+      cursor: pointer;
+      margin-bottom: 0.375rem;
+      transition: all 0.15s;
+    }
+    .reassign-user-item:hover {
+      border-color: #c4b5fd;
+      background: #faf5ff;
+    }
+    .reassign-user-item.selected {
+      border-color: #8b5cf6;
+      background: #f5f3ff;
+    }
+    .reassign-user-avatar {
+      width: 2.25rem;
+      height: 2.25rem;
+      border-radius: 50%;
+      background: #ede9fe;
+      color: #7c3aed;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.875rem;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .reassign-user-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .reassign-radio {
+      width: 1rem;
+      height: 1rem;
+      border-radius: 50%;
+      border: 2px solid #d1d5db;
+      flex-shrink: 0;
+    }
+    .reassign-user-item.selected .reassign-radio {
+      background: #8b5cf6;
+      border-color: #8b5cf6;
+    }
+
+    /* Empty / loading table state */
+    .table-empty-row td {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+  <!-- Mobile Menu Toggle -->
+  <button id="mobileMenuToggle" class="mobile-menu-toggle">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+
+  <!-- Mobile Backdrop -->
+  <div id="mobileBackdrop" class="mobile-backdrop"></div>
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="sidebar">
+    <!-- Logo -->
+    <div class="sidebar-header">
+      <a href="/" class="sidebar-logo">
+        <div class="logo-box">
+          <span id="logoInitials">HA</span>
+        </div>
+        <span id="sidebarCompanyName" class="company-name">HAEGL</span>
+      </a>
+      <button id="collapseBtn" class="collapse-btn" title="Collapse sidebar">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Role Badge -->
+    <div class="role-badge">
+      <div class="role-dot"></div>
+      <span>Employee</span>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav">
+      <a href="/employee/worklog/" class="nav-link active">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="3" y1="9" x2="21" y2="9"></line>
+          <line x1="9" y1="21" x2="9" y2="9"></line>
+        </svg>
+        <span>Work Log</span>
+        <div class="active-indicator"></div>
+      </a>
+      <a href="/employee/chat/" class="nav-link">
+        <div class="relative">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span id="chatBadge" class="chat-badge hidden">0</span>
+        </div>
+        <span>Chat</span>
+      </a>
+      <a href="/employee/profile/" class="nav-link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        <span>Profile</span>
+      </a>
+      <a href="/employee/attendance/" class="nav-link">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+          <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+        <span>Attendance</span>
+      </a>
+    </nav>
+
+    <!-- Footer -->
+    <div class="sidebar-footer">
+      <button onclick="handleLogout()" class="logout-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        <span>Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="content-wrapper">
+
+      <!-- Header Card -->
+      <div class="header-card">
+        <div class="header-bg"></div>
+        <div class="header-content">
+          <div class="header-top">
+            <div>
+              <p class="company-label" id="headerCompanyLabel">HAEGL · WORK LOG</p>
+              <div class="greeting-section">
+                <span class="greeting-emoji" id="greetingEmoji">🌅</span>
+                <span class="greeting-text"><span id="greetingText">Good morning</span>, <span id="userName">there</span>! 👋</span>
+              </div>
+            </div>
+            <div class="time-info">
+              <span class="time-badge">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                <span id="currentTime">--:--:--</span>
+              </span>
+              <span class="date-text" id="currentDate"></span>
+            </div>
+          </div>
+
+          <div class="header-bottom">
+            <div class="stats-badges">
+              <div class="stat-badge done">
+                <span>✓</span>
+                <span id="countDone">0</span>
+                <span class="stat-label">Done</span>
+              </div>
+              <div class="stat-badge active">
+                <span>◑</span>
+                <span id="countActive">0</span>
+                <span class="stat-label">Active</span>
+              </div>
+              <div class="stat-badge review">
+                <span>○</span>
+                <span id="countPending">0</span>
+                <span class="stat-label">Pending</span>
+              </div>
+            </div>
+            <button id="addEntryBtn" class="assign-task-btn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Add Entry
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Assigned Tasks -->
+      <div id="assignedCard" class="assigned-card" style="display:none;">
+        <button id="assignedToggle" class="assigned-header">
+          <div style="display:flex;align-items:center;gap:0.5rem;">
+            <div style="width:0.5rem;height:0.5rem;border-radius:999px;background:#8b5cf6;"></div>
+            <span class="table-title">Assigned Tasks from Manager</span>
+            <span id="assignedCount" class="assigned-notify-badge">0</span>
+          </div>
+          <span style="display:flex;align-items:center;gap:0.25rem;font-size:0.75rem;font-weight:700;color:#7c3aed;">
+            <span id="assignedToggleLabel">View all</span>
+            <svg id="assignedChevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition:transform 0.2s;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </span>
+        </button>
+        <div id="assignedList" class="assigned-list"></div>
+      </div>
+
+      <!-- Table Card -->
+      <div class="table-card">
+        <div class="table-toolbar">
+          <div class="toolbar-left">
+            <div class="table-dot"></div>
+            <span class="table-title">Work Log</span>
+            <span id="entryCount" class="entries-count">0 entries</span>
+            <span id="filterBadge" class="filtered-badge hidden">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"></path></svg>
+              Filtered
+            </span>
+          </div>
+          <div class="toolbar-right">
+            <select id="filterMonth" class="filter-select">
+              <option value="">All Months</option>
+              <option value="0">January</option><option value="1">February</option><option value="2">March</option>
+              <option value="3">April</option><option value="4">May</option><option value="5">June</option>
+              <option value="6">July</option><option value="7">August</option><option value="8">September</option>
+              <option value="9">October</option><option value="10">November</option><option value="11">December</option>
+            </select>
+            <select id="filterYear" class="filter-select"><option value="">All Years</option></select>
+            <button id="filterApply" class="apply-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              Apply
+            </button>
+            <button id="filterClear" class="clear-btn hidden">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              Clear
+            </button>
+          </div>
+        </div>
+
+        <div class="table-scroll-wrapper">
+          <div class="scroll-fade scroll-fade-left" id="scrollFadeLeft"></div>
+          <div class="table-container" id="tableContainer">
+            <table class="worklog-table">
+              <thead>
+                <tr>
+                  <th>Date</th><th>Project</th><th>Task</th><th>Planned</th><th>Start</th>
+                  <th>End / Timer</th><th>Actual</th><th>Result</th><th>Status</th>
+                  <th>Remark</th><th>Review</th><th>Admin Comment</th><th>Reassigned</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody">
+                <tr class="table-empty-row"><td colspan="14">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="scroll-fade scroll-fade-right" id="scrollFadeRight"></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Add / Edit Entry Modal -->
+  <div id="entryModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="entryModalTitle">➕ New Entry</h2>
+        <button id="entryModalClose" class="modal-close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <form id="entryForm">
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <div class="form-group" id="manualEntryToggleRow" style="display:flex;align-items:center;justify-content:space-between;background:#faf5ff;border:1px solid #ede9fe;border-radius:0.75rem;padding:0.75rem 1rem;">
+            <div>
+              <label style="display:block;font-weight:700;color:#7c3aed;text-transform:none;font-size:0.875rem;margin:0;">🖊️ Manual Entry</label>
+              <p style="font-size:0.75rem;color:#64748b;margin:0.125rem 0 0;">Already did this work? Log the start/end time yourself instead of using the timer. Admins will see this was entered manually.</p>
+            </div>
+            <input type="checkbox" id="fIsManual" style="width:1.25rem;height:1.25rem;flex-shrink:0;cursor:pointer;">
+          </div>
+
+          <div class="form-row" id="manualTimeFields" style="display:none;">
+            <div class="form-group">
+              <label>Start Time</label>
+              <input type="time" id="fStartTime" class="input">
+            </div>
+            <div class="form-group">
+              <label>End Time</label>
+              <input type="time" id="fEndTime" class="input">
+            </div>
+          </div>
+          <p id="manualDurationPreview" class="planned-preview" style="display:none;"></p>
+              <label>Date</label>
+              <input type="date" id="fDate" class="input" required>
+            </div>
+            <div class="form-group">
+              <label>Project Name</label>
+              <input type="text" id="fProject" class="input" placeholder="e.g., WorkTrack ERP" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Task Description</label>
+            <textarea id="fTask" class="textarea" placeholder="Describe the task... (press Enter for a new line)" rows="4" style="white-space: pre-wrap; resize: vertical;" required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Planned Time <span id="lockedHint" style="color:#8b5cf6;text-transform:none;display:none;">— set by manager</span></label>
+            <div id="wheelRow" class="wheel-picker-row">
+              <div class="wheel-col" id="hoursCol">
+                <div class="wheel-highlight"></div>
+                <div class="wheel-col-scroll" id="hoursScroll"></div>
+              </div>
+              <span style="font-size:1.5rem;font-weight:800;color:#d1d5db;margin-top:-4px;">:</span>
+              <div class="wheel-col" id="minutesCol">
+                <div class="wheel-highlight"></div>
+                <div class="wheel-col-scroll" id="minutesScroll"></div>
+              </div>
+            </div>
+            <div class="wheel-labels"><span>Hrs</span><span>Min</span></div>
+            <p id="plannedPreview" class="planned-preview"></p>
+          </div>
+
+          <div class="form-group">
+            <label>Remark</label>
+            <textarea id="fRemark" class="textarea" placeholder="Any additional notes... (press Enter for a new line)" rows="3" style="white-space: pre-wrap; resize: vertical;"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer" style="padding: 0 1.25rem 1.25rem;">
+          <button type="submit" id="entrySubmitBtn" class="submit-btn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path></svg>
+            <span id="entrySubmitLabel">Save Entry</span>
+          </button>
+          <button type="button" id="entryCancelBtn" class="cancel-btn">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Reassign Modal -->
+  <div id="reassignModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+          Reassign to Colleague
+        </h2>
+        <button id="reassignClose" class="modal-close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p id="reassignProjectName" style="font-size:0.75rem;color:#64748b;margin:0 0 0.75rem;font-weight:600;"></p>
+        <input type="text" id="reassignSearch" class="input" placeholder="Search colleague..." style="margin-bottom:0.75rem;">
+        <div id="reassignUserList" class="reassign-user-list"></div>
+      </div>
+      <div class="modal-footer" style="padding: 0 1.25rem 1.25rem;">
+        <button id="reassignConfirm" class="submit-btn" disabled>Reassign</button>
+        <button id="reassignCancel" class="cancel-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/auth.js"></script>
+  <script src="/static/js/chat-notifications-widget.js"></script>
+  <script>
+    requireEmployee();
+
+    const HOURS = Array.from({ length: 24 }, (_, i) => i);
+    const MINUTES = Array.from({ length: 12 }, (_, i) => i * 5);
+    const ITEM_H = 40;
+
+    // NOTE: intentionally no 'reassigned' entry here. A reassigned entry's
+    // Result column already shows "↗ Passed On" — the Status column should
+    // just say "Completed" for it, matching the admin work log page, rather
+    // than duplicating "Passed On" in both columns.
+    const STATUS_CFG = {
+      not_started: { label: 'Not Started', cls: 'not-started', icon: '○' },
+      in_progress: { label: 'In Progress', cls: 'in-progress', icon: '◑' },
+      paused:      { label: 'Paused',      cls: 'paused',      icon: '⏸' },
+      completed:   { label: 'Completed',   cls: 'completed',   icon: '✓' },
+    };
+    const REVIEW_CFG = {
+      pending:  { label: 'Pending',  cls: 'pending' },
+      approved: { label: 'Approved', cls: 'approved' },
+      rejected: { label: 'Rejected', cls: 'rejected' },
+    };
+
+    // Icon library used consistently for every row action
+    const ICONS = {
+      start: '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>',
+      pause: '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>',
+      resume: '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>',
+      done: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>',
+      edit: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"></path></svg>',
+      delete: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>',
+      reassign: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>',
+    };
+
+    let entries = [];
+    let assignedTasks = [];
+    let allEmployees = [];
+    let editingId = null;
+    let formHours = 0, formMinutes = 0;
+    let appliedMonth = '', appliedYear = '';
+    let reassignEntry = null;
+    let selectedReassignTarget = null;
+    let currentUser = {};
+    let liveTimerInterval = null;
+
+    // Tracks which AssignedTask (from the manager) the entry currently
+    // in the modal originated from, if any. Set when "Log work" is
+    // clicked; cleared on reset/close. Used on submit to mark that
+    // AssignedTask started+completed on the backend and drop it from
+    // the "Assigned Tasks from Manager" list — previously this link
+    // never happened, so logged tasks kept reappearing forever.
+    let loggingTaskId = null;
+    let isFromAssignedTask = false;
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+    function formatMinutes(mins) {
+      if (mins === null || mins === undefined || isNaN(mins)) return '—';
+      const m = Math.round(mins);
+      const h = Math.floor(m / 60), rem = m % 60;
+      if (h === 0) return `${rem}m`;
+      if (rem === 0) return `${h}h`;
+      return `${h}h ${rem}m`;
+    }
+    // Format a total-paused-seconds value the same way, for the Result
+    // column note (mirrors the admin work log page's formatSeconds).
+    function formatSeconds(totalSeconds) {
+      if (!totalSeconds) return '0m';
+      return formatMinutes(Math.round(totalSeconds / 60));
+    }
+    function formatElapsed(ms) {
+      const s = Math.max(0, Math.floor(ms / 1000));
+      const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+      return [h, m, sec].map(v => String(v).padStart(2, '0')).join(':');
+    }
+    function formatClockTime(iso) {
+      if (!iso) return null;
+      return new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    }
+    function compareTime(planned, actual) {
+      const diff = planned - actual;
+      if (diff > 0) return { label: 'Early', value: diff, cls: 'early' };
+      if (diff < 0) return { label: 'Overtime', value: -diff, cls: 'overtime' };
+      return { label: 'On Time', value: 0, cls: 'ontime' };
+    }
+    function getGreeting(hour) {
+      if (hour < 12) return { text: 'Good morning', emoji: '🌅' };
+      if (hour < 17) return { text: 'Good afternoon', emoji: '☀️' };
+      return { text: 'Good evening', emoji: '🌙' };
+    }
+
+    function tickClock() {
+      const n = new Date();
+      document.getElementById('currentTime').textContent = n.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      document.getElementById('currentDate').textContent = n.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      const g = getGreeting(n.getHours());
+      document.getElementById('greetingEmoji').textContent = g.emoji;
+      document.getElementById('greetingText').textContent = g.text;
+    }
+    function tickLiveTimers() {
+      document.querySelectorAll('.live-timer').forEach(el => {
+        const start = new Date(el.dataset.start).getTime();
+        const accumulated = parseInt(el.dataset.accumulated || '0', 10) * 60000;
+        el.textContent = formatElapsed(Date.now() - start + accumulated);
+      });
+    }
+
+    // ===== Task cell click-to-preview popover =====
+    let activeTaskPopover = null;
+    let activeTaskCell = null;
+
+    function closeTaskPopover() {
+      if (activeTaskPopover) {
+        activeTaskPopover.remove();
+        activeTaskPopover = null;
+      }
+      if (activeTaskCell) {
+        activeTaskCell.classList.remove('task-cell-active');
+        activeTaskCell = null;
+      }
+    }
+
+    function openTaskPopover(cellEl, text) {
+      const rect = cellEl.getBoundingClientRect();
+      const popover = document.createElement('div');
+      popover.className = 'task-popover';
+      popover.textContent = text;
+      document.body.appendChild(popover);
+
+      const popoverWidth = Math.min(320, window.innerWidth - 24);
+      popover.style.width = popoverWidth + 'px';
+
+      let left = rect.left;
+      if (left + popoverWidth > window.innerWidth - 12) left = window.innerWidth - popoverWidth - 12;
+      if (left < 12) left = 12;
+
+      let top = rect.bottom + 8;
+      const popoverHeight = popover.offsetHeight;
+      if (top + popoverHeight > window.innerHeight - 12) {
+        top = rect.top - popoverHeight - 8;
+        popover.classList.add('arrow-bottom');
+        if (top < 12) top = 12;
+      }
+
+      popover.style.top = top + 'px';
+      popover.style.left = left + 'px';
+
+      requestAnimationFrame(() => popover.classList.add('show'));
+
+      cellEl.classList.add('task-cell-active');
+      activeTaskPopover = popover;
+      activeTaskCell = cellEl;
+    }
+
+    // Called from the Task cell's own onclick. Clicking the same cell
+    // again closes it; clicking a different Task cell swaps to that one.
+    // Same behavior on mobile as on desktop.
+    function handleTaskCellClick(cellEl) {
+      if (activeTaskCell === cellEl) {
+        closeTaskPopover();
+        return;
+      }
+      const id = parseInt(cellEl.dataset.taskId, 10);
+      const entry = entries.find(e => e.id === id);
+      closeTaskPopover();
+      if (!entry) return;
+      openTaskPopover(cellEl, entry.task_done);
+    }
+
+    // ===== Remark/Comment cell click-to-preview popover =====
+    function handleRemarkCellClick(cellEl) {
+      if (activeTaskCell === cellEl) {
+        closeTaskPopover();
+        return;
+      }
+      const id = parseInt(cellEl.dataset.remarkId, 10);
+      const entry = entries.find(e => e.id === id);
+      closeTaskPopover();
+      if (!entry || !entry.remark) return;
+      openTaskPopover(cellEl, entry.remark);
+    }
+
+    function handleAdminCommentCellClick(cellEl) {
+      if (activeTaskCell === cellEl) {
+        closeTaskPopover();
+        return;
+      }
+      const id = parseInt(cellEl.dataset.commentId, 10);
+      const entry = entries.find(e => e.id === id);
+      closeTaskPopover();
+      if (!entry || !entry.admin_comment) return;
+      openTaskPopover(cellEl, entry.admin_comment);
+    }
+
+    // Click anywhere outside an open popover (and outside the cell that
+    // opened it — that click is already handled above) closes it.
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('.task-clickable') ||
+          e.target.closest('.remark-clickable') ||
+          e.target.closest('.comment-clickable')) return;
+      if (activeTaskPopover && !activeTaskPopover.contains(e.target)) {
+        closeTaskPopover();
+      }
+    });
+
+    // ===== Mobile scroll-edge fade for the table wrapper =====
+    function setupScrollFade() {
+      const container = document.getElementById('tableContainer');
+      const fadeLeft = document.getElementById('scrollFadeLeft');
+      const fadeRight = document.getElementById('scrollFadeRight');
+      if (!container || !fadeLeft || !fadeRight) return;
+
+      function update() {
+        const maxScroll = container.scrollWidth - container.clientWidth;
+        if (maxScroll <= 2) {
+          fadeLeft.classList.remove('visible');
+          fadeRight.classList.remove('visible');
+          return;
+        }
+        fadeLeft.classList.toggle('visible', container.scrollLeft > 4);
+        fadeRight.classList.toggle('visible', container.scrollLeft < maxScroll - 4);
+      }
+
+      container.addEventListener('scroll', () => {
+        update();
+        closeTaskPopover();
+      }, { passive: true });
+      window.addEventListener('resize', () => {
+        update();
+        closeTaskPopover();
+      });
+
+      // Table rows are re-rendered on filter changes, which can change
+      // scrollWidth — recheck whenever the body's content changes.
+      const observer = new MutationObserver(update);
+      observer.observe(container, { childList: true, subtree: true });
+
+      update();
+    }
+
+    // ===== Wheel picker =====
+    function buildWheel(scrollEl, options, selected, onSelect) {
+      scrollEl.innerHTML = '';
+      scrollEl.style.paddingTop = ITEM_H + 'px';
+      scrollEl.style.paddingBottom = ITEM_H + 'px';
+      scrollEl.style.scrollSnapType = 'y mandatory';
+      options.forEach((opt, idx) => {
+        const item = document.createElement('div');
+        item.className = 'wheel-item' + (opt === selected ? ' selected' : '');
+        item.textContent = String(opt).padStart(2, '0');
+        item.addEventListener('click', () => {
+          if (scrollEl.dataset.disabled === '1') return;
+          onSelect(opt);
+          scrollEl.scrollTo({ top: idx * ITEM_H, behavior: 'smooth' });
+        });
+        scrollEl.appendChild(item);
+      });
+      const idx = options.indexOf(selected);
+      if (idx >= 0) scrollEl.scrollTop = idx * ITEM_H;
+
+      let timeout = null;
+      scrollEl.onscroll = () => {
+        if (scrollEl.dataset.disabled === '1') return;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+          const i = Math.round(scrollEl.scrollTop / ITEM_H);
+          const clamped = Math.max(0, Math.min(options.length - 1, i));
+          scrollEl.scrollTo({ top: clamped * ITEM_H, behavior: 'smooth' });
+          onSelect(options[clamped]);
+        }, 120);
+      };
+    }
+    function refreshWheelSelection(scrollEl, options, selected) {
+      [...scrollEl.children].forEach((child, idx) => {
+        child.classList.toggle('selected', options[idx] === selected);
+      });
+    }
+    function initWheels() {
+      buildWheel(document.getElementById('hoursScroll'), HOURS, formHours, v => {
+        formHours = v; refreshWheelSelection(document.getElementById('hoursScroll'), HOURS, formHours); syncPlannedPreview();
+      });
+      buildWheel(document.getElementById('minutesScroll'), MINUTES, formMinutes, v => {
+        formMinutes = v; refreshWheelSelection(document.getElementById('minutesScroll'), MINUTES, formMinutes); syncPlannedPreview();
+      });
+    }
+    function setWheelsFromMinutes(mins) {
+      const safe = Number.isFinite(mins) && mins > 0 ? mins : 0;
+      formHours = Math.floor(safe / 60);
+      formMinutes = safe % 60;
+      const hScroll = document.getElementById('hoursScroll');
+      const mScroll = document.getElementById('minutesScroll');
+      const hIdx = HOURS.indexOf(formHours), mIdx = MINUTES.indexOf(formMinutes);
+      if (hIdx >= 0) hScroll.scrollTop = hIdx * ITEM_H;
+      if (mIdx >= 0) mScroll.scrollTop = mIdx * ITEM_H;
+      refreshWheelSelection(hScroll, HOURS, formHours);
+      refreshWheelSelection(mScroll, MINUTES, formMinutes);
+      syncPlannedPreview();
+    }
+    function syncPlannedPreview() {
+      const total = formHours * 60 + formMinutes;
+      document.getElementById('plannedPreview').textContent = total > 0 ? `≈ ${formatMinutes(total)}` : '';
+    }
+    function setWheelsDisabled(disabled) {
+      document.getElementById('hoursScroll').dataset.disabled = disabled ? '1' : '0';
+      document.getElementById('minutesScroll').dataset.disabled = disabled ? '1' : '0';
+      document.getElementById('lockedHint').style.display = disabled ? 'inline' : 'none';
+    }
+
+    // ===== Entry form =====
+    function resetForm() {
+      document.getElementById('entryForm').reset();
+      document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
+      setWheelsFromMinutes(0);
+      document.getElementById('fIsManual').checked = false;
+      document.getElementById('manualTimeFields').style.display = 'none';
+      document.getElementById('manualDurationPreview').style.display = 'none';
+      editingId = null;
+      loggingTaskId = null;
+      isFromAssignedTask = false;
+      setWheelsDisabled(false);
+      document.getElementById('fProject').disabled = false;
+      document.getElementById('fTask').disabled = false;
+      document.getElementById('entryModalTitle').textContent = '➕ New Entry';
+      document.getElementById('entrySubmitLabel').textContent = 'Save Entry';
+    }
+    function openEntryModal() {
+      document.getElementById('fDate').value = document.getElementById('fDate').value || new Date().toISOString().split('T')[0];
+      document.getElementById('entryModal').classList.remove('hidden');
+      document.getElementById('fIsManual').addEventListener('change', (e) => {
+        const show = e.target.checked;
+        document.getElementById('manualTimeFields').style.display = show ? 'flex' : 'none';
+        document.getElementById('manualDurationPreview').style.display = show ? 'block' : 'none';
+        syncManualDuration();
+      });
+      document.getElementById('fStartTime').addEventListener('input', syncManualDuration);
+      document.getElementById('fEndTime').addEventListener('input', syncManualDuration);
+
+      function syncManualDuration() {
+        const s = document.getElementById('fStartTime').value;
+        const en = document.getElementById('fEndTime').value;
+        const preview = document.getElementById('manualDurationPreview');
+        if (!s || !en) { preview.textContent = ''; return; }
+        const [sh, sm] = s.split(':').map(Number);
+        const [eh, em] = en.split(':').map(Number);
+        let mins = (eh * 60 + em) - (sh * 60 + sm);
+        if (mins < 0) mins += 24 * 60;
+        preview.textContent = mins > 0 ? `≈ Worked ${formatMinutes(mins)}` : 'End time must be after start time';
+      }
+      initWheels();
+    }
+    function closeEntryModal() {
+      document.getElementById('entryModal').classList.add('hidden');
+      resetForm();
+    }
+
+    // ===== Data loading =====
+    async function loadAll() {
+      const [e, t, emp] = await Promise.all([
+        getWorkEntries(), getAssignedTasks(), getAllEmployeesForReassign(),
+      ]);
+      entries = Array.isArray(e) ? e : [];
+      assignedTasks = Array.isArray(t) ? t : [];
+      allEmployees = Array.isArray(emp) ? emp : [];
+      renderAssignedTasks();
+      renderYearOptions();
+      renderTable();
+      renderStats();
+    }
+
+    function renderStats() {
+      document.getElementById('countDone').textContent = entries.filter(e => e.status === 'completed').length;
+      document.getElementById('countActive').textContent = entries.filter(e => e.status === 'in_progress').length;
+      document.getElementById('countPending').textContent = entries.filter(e => e.review_status === 'pending').length;
+    }
+
+    function renderYearOptions() {
+      const years = Array.from(new Set(entries.map(e => new Date(e.date).getFullYear()))).sort((a, b) => b - a);
+      const sel = document.getElementById('filterYear');
+      sel.innerHTML = '<option value="">All Years</option>' + years.map(y => `<option value="${y}">${y}</option>`).join('');
+    }
+
+    function filteredEntries() {
+      return entries.filter(entry => {
+        const d = new Date(entry.date);
+        return (appliedMonth === '' || d.getMonth() === parseInt(appliedMonth)) &&
+               (appliedYear === '' || d.getFullYear() === parseInt(appliedYear));
+      });
+    }
+
+    // Only assigned tasks that haven't been logged yet stay in this
+    // list — once "Log work" is submitted, the task is marked
+    // started+completed on the backend and dropped from `assignedTasks`
+    // locally, so it disappears immediately instead of lingering.
+    function renderAssignedTasks() {
+      const card = document.getElementById('assignedCard');
+      const countEl = document.getElementById('assignedCount');
+      const list = document.getElementById('assignedList');
+      if (assignedTasks.length === 0) { card.style.display = 'none'; return; }
+      card.style.display = '';
+
+      // Only tasks not yet logged count toward the red notification
+      // badge — a task that's already been logged shouldn't keep the
+      // "new task waiting" alert lit up, but it still stays visible
+      // in the list below rather than disappearing.
+      const pendingCount = assignedTasks.filter(t => t.status !== 'completed').length;
+      if (pendingCount > 0) {
+        countEl.textContent = pendingCount;
+        countEl.style.display = '';
+      } else {
+        countEl.style.display = 'none';
+      }
+
+      list.innerHTML = assignedTasks.map(task => {
+        const isLogged = task.status === 'completed';
+        return `
+        <div class="assigned-row" style="${isLogged ? 'opacity:0.65;' : ''}">
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.125rem;flex-wrap:wrap;">
+              <span style="font-size:0.875rem;font-weight:700;color:#1e293b;">${escapeHtml(task.project_name)}</span>
+              <span class="entries-count">${formatMinutes(task.planned_minutes)}</span>
+              ${task.deadline ? `<span style="font-size:0.625rem;color:#be123c;font-weight:700;">Due ${task.deadline}</span>` : ''}
+            </div>
+            <p style="font-size:0.75rem;color:#64748b;margin:0;">${escapeHtml(task.task_description)}</p>
+          </div>
+          ${isLogged
+            ? `<span style="white-space:nowrap;font-size:0.75rem;font-weight:700;color:#16a34a;background:#dcfce7;border:1px solid #bbf7d0;border-radius:0.5rem;padding:0.375rem 0.75rem;">✓ Logged</span>`
+            : `<button class="cancel-btn log-task-btn" style="white-space:nowrap;" data-task-id="${task.id}">Log work</button>`
+          }
+        </div>
+      `;
+      }).join('');
+      list.querySelectorAll('.log-task-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const task = assignedTasks.find(t => t.id === parseInt(btn.dataset.taskId, 10));
+          if (!task) return;
+          resetForm();
+          document.getElementById('fProject').value = task.project_name;
+          document.getElementById('fTask').value = task.task_description;
+          setWheelsFromMinutes(task.planned_minutes);
+          document.getElementById('fProject').disabled = true;
+          document.getElementById('fTask').disabled = true;
+          // Remember which assigned task this entry is being logged
+          // for, so handleSubmit can mark it complete on the backend
+          // once the entry is saved.
+          loggingTaskId = task.id;
+          openEntryModal();
+          setWheelsDisabled(true);
+        });
+      });
+    }
+
+    function renderTable() {
+      const list = filteredEntries();
+      document.getElementById('entryCount').textContent = `${list.length} entries`;
+      const isFiltered = appliedMonth !== '' || appliedYear !== '';
+      document.getElementById('filterBadge').classList.toggle('hidden', !isFiltered);
+      document.getElementById('filterClear').classList.toggle('hidden', !isFiltered);
+
+      // Any open task popover refers to a cell that's about to be
+      // replaced — close it before re-rendering.
+      closeTaskPopover();
+
+      const tbody = document.getElementById('tableBody');
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr class="table-empty-row"><td colspan="14">
+          ${isFiltered ? 'No entries match this filter' : 'No entries yet — click Add Entry to log your first work'}
+        </td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = list.map(entry => {
+        const isPassedOn = entry.status === 'reassigned';
+        const cmp = entry.status === 'completed' ? compareTime(entry.planned_minutes, entry.actual_minutes) : null;
+        const statusCfg = STATUS_CFG[entry.status] || STATUS_CFG.completed;
+        const reviewCfg = REVIEW_CFG[entry.review_status] || REVIEW_CFG.pending;
+
+        // Total time this entry has spent paused (across all pauses so
+        // far), shown as a small note — under the Result badge once
+        // completed, and under the live timer while still in progress.
+        const pausedNote = entry.total_paused_seconds > 0
+          ? `<div class="paused-total-note">⏸ Paused ${formatSeconds(entry.total_paused_seconds)}</div>`
+          : '';
+
+        const resultCell = isPassedOn
+          ? `<span class="result-badge reassigned">↗ Passed On</span>`
+          : cmp
+            ? `<span class="result-badge ${cmp.cls}">${cmp.label}${cmp.value > 0 ? ` (${formatMinutes(cmp.value)})` : ''}</span>${pausedNote}`
+            : `<span class="no-time-cell">—</span>`;
+
+        const startTime = formatClockTime(entry.original_start_time || entry.start_time);
+        const endTime = formatClockTime(entry.end_time);
+
+        const timerCell = entry.status === 'in_progress' && entry.start_time
+          ? `<span class="live-timer" data-start="${entry.start_time}" data-accumulated="${entry.accumulated_minutes || 0}">--:--:--</span>${pausedNote}`
+          : entry.status === 'paused'
+            ? `<span class="paused-timer">⏸ ${formatMinutes((entry.accumulated_minutes || 0))}</span>`
+            : endTime
+              ? `<span style="font-weight:600;color:#1e293b;">${endTime}</span>`
+              : `<span class="no-time-cell">—</span>`;
+
+        const reassignedCell = entry.is_reassigned
+          ? `<span class="reassigned-text">${entry.reassigned_to ? `→ ${escapeHtml(entry.reassigned_to)}` : entry.reassigned_from ? `← ${escapeHtml(entry.reassigned_from)}` : 'Yes'}</span>`
+          : `<span class="no-time-cell">—</span>`;
+
+        let actionButtons = '';
+        if (entry.status === 'not_started') {
+          actionButtons += `<button class="action-btn approve toggle-btn" data-id="${entry.id}" data-action="start" title="Start">${ICONS.start}</button>`;
+        }
+        if (entry.status === 'in_progress') {
+          actionButtons += `<button class="action-btn approve toggle-btn" data-id="${entry.id}" data-action="complete" title="Stop (Mark Done)">${ICONS.done}</button>`;
+        }
+        if (entry.status === 'paused') {
+          actionButtons += `<button class="action-btn approve resume-btn" data-id="${entry.id}" title="Resume">${ICONS.resume}</button>`;
+        }
+        actionButtons += `
+          <button class="action-btn edit edit-btn" data-id="${entry.id}" title="Edit">${ICONS.edit}</button>
+          <button class="action-btn reject delete-btn" data-id="${entry.id}" title="Delete">${ICONS.delete}</button>
+          <button class="action-btn reassign reassign-btn" data-id="${entry.id}" title="Reassign">${ICONS.reassign}</button>`;
+
+        return `<tr>
+          <td class="nowrap-cell" style="font-weight:700;color:#1e293b;">${entry.date}</td>
+          <td class="nowrap-cell">
+            <span class="project-cell"><span class="project-dot"></span>${escapeHtml(entry.project_name)}</span>
+          </td>
+          <td><span class="task-text task-clickable" data-task-id="${entry.id}" onclick="handleTaskCellClick(this)">${escapeHtml(entry.task_done)}</span></td>
+          <td class="nowrap-cell" style="font-weight:800;color:#1e293b;">${formatMinutes(entry.planned_minutes)}</td>
+          <td class="nowrap-cell time-cell">${startTime || '<span class="no-time">—</span>'}</td>
+          <td class="nowrap-cell">${timerCell}</td>
+          <td class="nowrap-cell" style="font-weight:800;color:#1e293b;">${entry.actual_minutes != null ? formatMinutes(entry.actual_minutes) : '—'}</td>
+          <td class="nowrap-cell">${resultCell}</td>
+          <td class="nowrap-cell"><span class="status-badge ${statusCfg.cls}"><span class="status-icon">${statusCfg.icon}</span>${statusCfg.label}</span></td>
+          <td>${entry.remark ? `<span class="comment-display remark-clickable" data-remark-id="${entry.id}" onclick="handleRemarkCellClick(this)">${escapeHtml(entry.remark)}</span>` : '<span class="comment-display empty">—</span>'}</td>
+          <td class="nowrap-cell"><span class="review-badge ${reviewCfg.cls}">${reviewCfg.label}</span></td>
+          <td>${entry.admin_comment ? `<span class="comment-display comment-clickable" data-comment-id="${entry.id}" onclick="handleAdminCommentCellClick(this)">${escapeHtml(entry.admin_comment)}</span>` : '<span class="comment-display empty">—</span>'}</td>
+          <td class="reassigned-cell">${reassignedCell}</td>
+          <td class="nowrap-cell"><div class="action-buttons">${actionButtons}</div></td>
+        </tr>`;
+      }).join('');
+
+      tbody.querySelectorAll('.toggle-btn').forEach(b => b.addEventListener('click', () => {
+        const id = parseInt(b.dataset.id, 10);
+        if (b.dataset.action === 'start') handleStart(id);
+        else handleComplete(id);
+      }));
+      tbody.querySelectorAll('.resume-btn').forEach(b => b.addEventListener('click', () => handleResume(parseInt(b.dataset.id, 10))));
+      tbody.querySelectorAll('.edit-btn').forEach(b => b.addEventListener('click', () => handleEdit(parseInt(b.dataset.id, 10))));
+      tbody.querySelectorAll('.delete-btn').forEach(b => b.addEventListener('click', () => handleDelete(parseInt(b.dataset.id, 10))));
+      tbody.querySelectorAll('.reassign-btn').forEach(b => b.addEventListener('click', () => openReassignModal(parseInt(b.dataset.id, 10))));
+
+      tickLiveTimers();
+    }
+
+    // ===== CRUD =====
+    async function handleSubmit(e) {
+      e.preventDefault();
+      if (formHours === 0 && formMinutes === 0) { alert('Please set a planned duration greater than 0.'); return; }
+      const btn = document.getElementById('entrySubmitBtn');
+      btn.disabled = true;
+      const isManual = document.getElementById('fIsManual').checked;
+      const payload = {
+        date: document.getElementById('fDate').value,
+        project_name: document.getElementById('fProject').value,
+        task_done: document.getElementById('fTask').value,
+        planned_minutes: formHours * 60 + formMinutes,
+        remark: document.getElementById('fRemark').value,
+      };
+
+      if (isManual) {
+        const dateVal = document.getElementById('fDate').value;
+        const startVal = document.getElementById('fStartTime').value;
+        const endVal = document.getElementById('fEndTime').value;
+        if (!startVal || !endVal) { alert('Please set both a start time and end time for a manual entry.'); btn.disabled = false; return; }
+
+        const startISO = new Date(`${dateVal}T${startVal}:00`).toISOString();
+        let endDateObj = new Date(`${dateVal}T${endVal}:00`);
+        const startDateObj = new Date(`${dateVal}T${startVal}:00`);
+        if (endDateObj < startDateObj) endDateObj.setDate(endDateObj.getDate() + 1); // overnight shift
+        const endISO = endDateObj.toISOString();
+        const actualMins = Math.round((endDateObj - startDateObj) / 60000);
+
+        Object.assign(payload, {
+          is_manual_entry: true,
+          status: 'completed',
+          start_time: startISO,
+          end_time: endISO,
+          actual_minutes: actualMins,
+        });
+      } else if (!editingId) {
+        Object.assign(payload, { status: 'not_started', start_time: null, end_time: null, actual_minutes: null });
+      }
+
+      const data = editingId
+        ? await updateWorkEntry(editingId, payload)
+        : await addWorkEntry(payload);
+
+      if (data && data.id) {
+        if (editingId) entries = entries.map(en => en.id === editingId ? data : en);
+        else entries = [data, ...entries];
+
+        // This entry was created from an "Assigned Tasks from Manager"
+        // card — tell the backend the AssignedTask has been picked up
+        // and finished. It STAYS in the list (the backend already keeps
+        // returning it regardless of status), just marked as logged so
+        // the "Log work" button turns into a "Logged" badge instead of
+        // the card vanishing. (completeAssignedTask requires a start_time
+        // to already be set, so start it first.)
+        if (!editingId && loggingTaskId) {
+          const taskIdToClose = loggingTaskId;
+          const startResult = await startAssignedTask(taskIdToClose);
+          if (startResult && startResult.error) {
+            console.error('startAssignedTask failed:', startResult.error);
+          }
+          const completeResult = await completeAssignedTask(taskIdToClose);
+          if (completeResult && completeResult.error) {
+            console.error('completeAssignedTask failed:', completeResult.error);
+          }
+          assignedTasks = assignedTasks.map(t =>
+            t.id === taskIdToClose ? { ...t, status: 'completed' } : t
+          );
+          renderAssignedTasks();
+        }
+
+        renderYearOptions();
+        renderTable();
+        renderStats();
+      } else if (data && data.error) {
+        alert(data.error);
+      }
+      btn.disabled = false;
+      closeEntryModal();
+    }
+
+    function handleEdit(id) {
+      const entry = entries.find(e => e.id === id);
+      if (!entry) return;
+      resetForm();
+      document.getElementById('fDate').value = entry.date;
+      document.getElementById('fProject').value = entry.project_name;
+      document.getElementById('fTask').value = entry.task_done;
+      document.getElementById('fRemark').value = entry.remark || '';
+      editingId = id;
+      document.getElementById('entryModalTitle').textContent = '✏️ Edit Entry';
+      document.getElementById('entrySubmitLabel').textContent = 'Update';
+      openEntryModal();
+      setWheelsFromMinutes(entry.planned_minutes || 0);
+    }
+
+    async function handleDelete(id) {
+      if (!confirm('Delete this entry?')) return;
+      await deleteWorkEntry(id);
+      entries = entries.filter(e => e.id !== id);
+      renderTable();
+      renderStats();
+    }
+
+    async function handleStart(id) {
+      const data = await updateWorkEntry(id, { start_time: new Date().toISOString(), status: 'in_progress' });
+      if (data && data.id) { entries = entries.map(e => e.id === id ? data : e); renderTable(); renderStats(); }
+    }
+
+    async function handleComplete(id) {
+      const entry = entries.find(e => e.id === id);
+      if (!entry) return;
+      let currentElapsed = 0;
+      if (entry.start_time) {
+        currentElapsed = Math.round((Date.now() - new Date(entry.start_time).getTime()) / 60000);
+      }
+      const totalActual = (entry.accumulated_minutes || 0) + currentElapsed;
+      const endTime = new Date().toISOString();
+      const data = await updateWorkEntry(id, { end_time: endTime, actual_minutes: totalActual, status: 'completed' });
+      if (data && data.id) { entries = entries.map(e => e.id === id ? data : e); renderTable(); renderStats(); }
+    }
+
+    async function handlePause(id) {
+      const entry = entries.find(e => e.id === id);
+      if (!entry) return;
+      const currentElapsed = Math.round((Date.now() - new Date(entry.start_time).getTime()) / 60000);
+      const newAccumulated = (entry.accumulated_minutes || 0) + currentElapsed;
+      const data = await updateWorkEntry(id, {
+        accumulated_minutes: newAccumulated,
+        pause_count: (entry.pause_count || 0) + 1,
+        status: 'paused'
+      });
+      if (data && data.id) { entries = entries.map(e => e.id === id ? data : e); renderTable(); renderStats(); }
+    }
+
+    async function handleResume(id) {
+      const data = await updateWorkEntry(id, {
+        start_time: new Date().toISOString(),
+        status: 'in_progress'
+      });
+      if (data && data.id) { entries = entries.map(e => e.id === id ? data : e); renderTable(); renderStats(); }
+    }
+
+    // ===== Reassign =====
+    function openReassignModal(entryId) {
+      reassignEntry = entries.find(e => e.id === entryId);
+      selectedReassignTarget = null;
+      document.getElementById('reassignSearch').value = '';
+      document.getElementById('reassignProjectName').textContent = reassignEntry ? reassignEntry.project_name : '';
+      document.getElementById('reassignConfirm').disabled = true;
+      renderReassignList('');
+      document.getElementById('reassignModal').classList.remove('hidden');
+    }
+    function closeReassignModal() {
+      document.getElementById('reassignModal').classList.add('hidden');
+      reassignEntry = null;
+    }
+    function renderReassignList(search) {
+      const list = document.getElementById('reassignUserList');
+      const term = search.trim().toLowerCase();
+      const currentUserId = currentUser.id;
+      const filtered = allEmployees.filter(emp => {
+        if (emp.id === currentUserId) return false;
+        if (!term) return true;
+        return (emp.full_name || '').toLowerCase().includes(term) || (emp.department || '').toLowerCase().includes(term);
+      });
+      list.innerHTML = filtered.map(emp => `
+        <div class="reassign-user-item" data-id="${emp.id}">
+          <div class="reassign-user-avatar">
+            ${emp.photo ? `<img src="${emp.photo}" alt="${escapeHtml(emp.full_name)}">` : `<span>${(emp.full_name || '?')[0]}</span>`}
+          </div>
+          <div style="flex:1;min-width:0;">
+            <p style="font-size:0.875rem;font-weight:700;color:#1e293b;margin:0;">${escapeHtml(emp.full_name)}</p>
+            <p style="font-size:0.75rem;color:#64748b;margin:0;">${escapeHtml(emp.designation || '')} · ${escapeHtml(emp.department || '')}</p>
+          </div>
+          <div class="reassign-radio"></div>
+        </div>
+      `).join('') || `<p style="text-align:center;color:#94a3b8;padding:2rem;">No colleagues found</p>`;
+
+      list.querySelectorAll('.reassign-user-item').forEach(opt => {
+        opt.addEventListener('click', () => {
+          selectedReassignTarget = parseInt(opt.dataset.id, 10);
+          list.querySelectorAll('.reassign-user-item').forEach(o => o.classList.remove('selected'));
+          opt.classList.add('selected');
+          document.getElementById('reassignConfirm').disabled = false;
+        });
+      });
+    }
+    async function confirmReassign() {
+      if (!selectedReassignTarget || !reassignEntry) return;
+      const btn = document.getElementById('reassignConfirm');
+      btn.disabled = true; btn.textContent = 'Reassigning...';
+      const data = await reassignWorkEntry(reassignEntry.id, selectedReassignTarget);
+      if (data && data.id) {
+        entries = entries.map(e => e.id === reassignEntry.id ? data : e);
+        renderTable();
+        renderStats();
+        closeReassignModal();
+      }
+      btn.disabled = false; btn.textContent = 'Reassign';
+    }
+
+    // ===== Sidebar =====
+    function setupSidebar() {
+      document.getElementById('mobileMenuToggle').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('mobileBackdrop').classList.toggle('show');
+      });
+      document.getElementById('mobileBackdrop').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('mobileBackdrop').classList.remove('show');
+      });
+      document.getElementById('collapseBtn').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+      });
+      const companyName = localStorage.getItem('company_name') || 'HAEGL';
+      document.getElementById('sidebarCompanyName').textContent = companyName;
+      document.getElementById('logoInitials').textContent = companyName.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+      document.getElementById('headerCompanyLabel').textContent = `${companyName.toUpperCase()} · WORK LOG`;
+    }
+
+    async function handleLogout() {
+      try {
+        await fetch('/api/logout/', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Token ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json',
+          },
+        });
+      } catch {}
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('is_admin');
+      localStorage.removeItem('company_name');
+      window.location.href = '/';
+    }
+
+    async function loadChatBadge() {
+      try {
+        const data = await getUnreadCount();
+        if (data.total_unread > 0) {
+          const badge = document.getElementById('chatBadge');
+          badge.textContent = data.total_unread > 99 ? '99+' : data.total_unread;
+          badge.classList.remove('hidden');
+        }
+      } catch {}
+    }
+
+    // ===== Init =====
+    document.addEventListener('DOMContentLoaded', async () => {
+      try { currentUser = JSON.parse(localStorage.getItem('user') || '{}'); } catch { currentUser = {}; }
+      document.getElementById('userName').textContent = currentUser.first_name || (currentUser.full_name || '').split(' ')[0] || 'there';
+
+      setupSidebar();
+      document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
+      tickClock();
+      setInterval(tickClock, 1000);
+      liveTimerInterval = setInterval(tickLiveTimers, 1000);
+
+      document.getElementById('addEntryBtn').addEventListener('click', () => { resetForm(); openEntryModal(); });
+      document.getElementById('entryModalClose').addEventListener('click', closeEntryModal);
+      document.getElementById('entryCancelBtn').addEventListener('click', closeEntryModal);
+      document.getElementById('entryForm').addEventListener('submit', handleSubmit);
+
+      document.getElementById('assignedToggle').addEventListener('click', () => {
+        const list = document.getElementById('assignedList');
+        const chevron = document.getElementById('assignedChevron');
+        const label = document.getElementById('assignedToggleLabel');
+        const open = list.classList.toggle('open');
+        chevron.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
+        label.textContent = open ? 'Hide' : 'View all';
+      });
+
+      document.getElementById('filterApply').addEventListener('click', () => {
+        appliedMonth = document.getElementById('filterMonth').value;
+        appliedYear = document.getElementById('filterYear').value;
+        renderTable();
+      });
+      document.getElementById('filterClear').addEventListener('click', () => {
+        document.getElementById('filterMonth').value = '';
+        document.getElementById('filterYear').value = '';
+        appliedMonth = ''; appliedYear = '';
+        renderTable();
+      });
+
+      document.getElementById('reassignClose').addEventListener('click', closeReassignModal);
+      document.getElementById('reassignCancel').addEventListener('click', closeReassignModal);
+      document.getElementById('reassignConfirm').addEventListener('click', confirmReassign);
+      document.getElementById('reassignSearch').addEventListener('input', (e) => renderReassignList(e.target.value));
+
+      loadChatBadge();
+      await loadAll();
+      setupScrollFade();
+    });
+
+    window.addEventListener('beforeunload', () => {
+      if (liveTimerInterval) clearInterval(liveTimerInterval);
+    });
+  </script>
+</body>
+</html>

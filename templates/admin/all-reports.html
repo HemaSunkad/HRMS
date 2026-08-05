@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>All Reports - WorkTrack Admin</title>
+  <link rel="icon" href="/static/assets/apple-icon.jpeg">
+  <link rel="stylesheet" href="/static/css/variables.css">
+  <link rel="stylesheet" href="/static/css/reset.css">
+  <link rel="stylesheet" href="/static/css/base.css">
+  <link rel="stylesheet" href="/static/css/components.css">
+  <link rel="stylesheet" href="/static/css/animations.css">
+  <link rel="stylesheet" href="/static/css/utilities.css">
+  <link rel="stylesheet" href="/static/css/bubble-background.css">
+  <link rel="stylesheet" href="/static/css/responsive.css">
+</head>
+<body class="bg-background">
+  <!-- Mobile Sidebar Toggle -->
+  <button id="mobileMenuToggle" class="hidden fixed top-4 left-4 z-40 p-2 rounded-lg bg-white border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+
+  <!-- Mobile Backdrop -->
+  <div id="mobileBackdrop" class="hidden fixed inset-0 bg-black/40 z-20 lg:hidden"></div>
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="fixed left-0 top-0 h-screen border-r border-white/10 p-4 flex flex-col z-30 lg:relative lg:z-10 shadow-xl transition-all duration-300 -translate-x-full lg:translate-x-0 w-64"
+    style="background-image: linear-gradient(rgba(20,16,31,0.9), rgba(20,16,31,0.9)), url('/static/assets/backgrounds/wave-dark.jpg'); background-size: cover; background-position: center;">
+    <!-- Logo -->
+    <div class="mb-6 flex items-center justify-between">
+      <a href="../index.html" class="flex items-center gap-2 min-w-0">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 font-black text-white text-sm shadow-lg"
+          style="background: linear-gradient(135deg, #8b5cf6, #d946ef);"
+          id="sidebarLogo">
+          HA
+        </div>
+        <span class="font-black text-base text-white leading-tight break-words" id="sidebarCompanyName">HAEGL</span>
+      </a>
+    </div>
+
+    <!-- Role Badge -->
+    <div class="mb-6">
+      <div class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold border bg-violet-500/15 border-violet-400/30 text-violet-200">
+        <span class="w-2 h-2 rounded-full animate-pulse bg-violet-400"></span>
+        Admin
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 space-y-1">
+      <a href="worklog.html" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all group relative overflow-hidden text-slate-300 hover:text-white hover:bg-white/10">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="3" y1="9" x2="21" y2="9"></line>
+          <line x1="9" y1="21" x2="9" y2="9"></line>
+        </svg>
+        <span class="font-medium text-sm">Work Log</span>
+      </a>
+      <a href="employees.html" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all group relative overflow-hidden text-slate-300 hover:text-white hover:bg-white/10">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        <span class="font-medium text-sm">Employees</span>
+      </a>
+      <a href="analytics.html" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all group relative overflow-hidden text-slate-300 hover:text-white hover:bg-white/10">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="20" x2="18" y2="10"></line>
+          <line x1="12" y1="20" x2="12" y2="4"></line>
+          <line x1="6" y1="20" x2="6" y2="14"></line>
+        </svg>
+        <span class="font-medium text-sm">Analytics</span>
+      </a>
+      <a href="all-reports.html" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all group relative overflow-hidden bg-gradient-to-r from-violet-500/25 to-fuchsia-500/25 border border-violet-400/30 text-white">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+        </svg>
+        <span class="font-medium text-sm">Reports</span>
+      </a>
+      <a href="chat.html" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all group relative overflow-hidden text-slate-300 hover:text-white hover:bg-white/10">
+        <div class="relative">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span id="chatBadge" class="hidden absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold leading-none"></span>
+        </div>
+        <span class="font-medium text-sm">Chat</span>
+      </a>
+    </nav>
+
+    <!-- Footer -->
+    <div class="border-t border-white/10 pt-4">
+      <button onclick="handleLogout()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:text-rose-300 hover:bg-rose-400/10 transition-all group">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        <span class="font-medium text-sm">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="flex-1 p-6 lg:p-8">
+    <div class="max-w-6xl mx-auto space-y-8">
+      <!-- Header -->
+      <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-xs font-medium text-violet-400 bg-violet-400/10 px-3 py-1 rounded-full border border-violet-400/20 flex items-center gap-1">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+              <span id="totalReports">0</span> Total Reports
+            </span>
+          </div>
+          <h1 class="text-4xl font-bold text-slate-900">All Reports</h1>
+          <p class="text-slate-500 mt-1">Review and manage all employee reports</p>
+        </div>
+      </div>
+
+      <!-- Filter Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <button onclick="filterByStatus('all')" class="filter-card card p-4 cursor-pointer hover:scale-105 transition-all" data-filter="all">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-2xl font-bold text-slate-900" id="countAll">0</p>
+              <p class="text-sm text-slate-500">All Reports</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-violet-100 flex items-center justify-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-violet-400">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+            </div>
+          </div>
+        </button>
+        <button onclick="filterByStatus('approved')" class="filter-card card p-4 cursor-pointer hover:scale-105 transition-all" data-filter="approved">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-2xl font-bold text-slate-900" id="countApproved">0</p>
+              <p class="text-sm text-slate-500">Approved</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-emerald-400">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            </div>
+          </div>
+        </button>
+        <button onclick="filterByStatus('pending')" class="filter-card card p-4 cursor-pointer hover:scale-105 transition-all" data-filter="pending">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-2xl font-bold text-slate-900" id="countPending">0</p>
+              <p class="text-sm text-slate-500">Pending Review</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-amber-400">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+          </div>
+        </button>
+        <button onclick="filterByStatus('rejected')" class="filter-card card p-4 cursor-pointer hover:scale-105 transition-all" data-filter="rejected">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-2xl font-bold text-slate-900" id="countRejected">0</p>
+              <p class="text-sm text-slate-500">Rejected</p>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-rose-100 flex items-center justify-center">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-rose-400">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+              </svg>
+            </div>
+          </div>
+        </button>
+      </div>
+
+      <!-- Search -->
+      <div class="card">
+        <form onsubmit="handleSearch(event)" class="flex items-center gap-3 p-4">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-slate-400">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="searchInput" class="input flex-1" placeholder="Search by employee name, date, or title...">
+          <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+      </div>
+
+      <!-- Reports List -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Reports</h2>
+        </div>
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Date</th>
+                <th>Hours</th>
+                <th>Tasks Completed</th>
+                <th>Status</th>
+                <th>Submitted</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="reportsBody">
+              <tr>
+                <td colspan="7" class="text-center text-slate-500 py-8">Loading reports...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Report Detail Modal -->
+  <div id="reportModal" class="modal-backdrop hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Report Details</h3>
+        <button onclick="closeModal()" class="modal-close">✕</button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <!-- Report details will be injected here -->
+      </div>
+      <div class="modal-footer" id="modalFooter">
+        <!-- Actions will be injected here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/auth.js"></script>
+  <script src="/static/js/utils.js"></script>
+  <script src="/static/js/components/sidebar.js"></script>
+  <script>
+    // Authentication check
+    requireAdmin();
+
+    // State
+    let reports = [];
+    let filteredReports = [];
+    let currentFilter = 'all';
+    let currentReport = null;
+
+    // Load reports
+    loadReports();
+
+    async function loadReports() {
+      try {
+        const data = await getAdminReports();
+        if (Array.isArray(data)) {
+          reports = data;
+          filteredReports = data;
+          updateCounts();
+          displayReports();
+        }
+      } catch (error) {
+        console.error('Failed to load reports:', error);
+        document.getElementById('reportsBody').innerHTML = '<tr><td colspan="7" class="text-center text-slate-500 py-8">Failed to load reports</td></tr>';
+      }
+    }
+
+    // Update counts
+    function updateCounts() {
+      const counts = {
+        all: reports.length,
+        approved: reports.filter(r => r.status === 'approved').length,
+        pending: reports.filter(r => r.status === 'pending').length,
+        rejected: reports.filter(r => r.status === 'rejected').length,
+      };
+
+      document.getElementById('totalReports').textContent = counts.all;
+      document.getElementById('countAll').textContent = counts.all;
+      document.getElementById('countApproved').textContent = counts.approved;
+      document.getElementById('countPending').textContent = counts.pending;
+      document.getElementById('countRejected').textContent = counts.rejected;
+    }
+
+    // Display reports
+    function displayReports() {
+      const tbody = document.getElementById('reportsBody');
+
+      if (filteredReports.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-slate-500 py-8">No reports found</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filteredReports.map(report => `
+        <tr class="hover:bg-muted cursor-pointer" onclick="viewReport(${report.id})">
+          <td>
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                ${report.employee_name?.[0] || '?'}
+              </div>
+              <span class="font-medium text-sm">${report.employee_name || 'Unknown'}</span>
+            </div>
+          </td>
+          <td>${report.date}</td>
+          <td>${formatMinutes(report.hours_worked * 60)}</td>
+          <td>
+            <div class="text-sm">
+              ${report.tasks_completed && report.tasks_completed.length > 0 ?
+                `<div class="flex flex-wrap gap-1">
+                  ${report.tasks_completed.slice(0, 2).map(task =>
+                    `<span class="badge badge-default">${truncate(task, 20)}</span>`
+                  ).join('')}
+                  ${report.tasks_completed.length > 2 ? `<span class="text-xs text-slate-500">+${report.tasks_completed.length - 2} more</span>` : ''}
+                </div>` :
+                '<span class="text-slate-400">—</span>'
+              }
+            </div>
+          </td>
+          <td>
+            <span class="status-badge ${
+              report.status === 'approved' ? 'status-badge-approved' :
+              report.status === 'pending' ? 'status-badge-pending' :
+              'status-badge-rejected'
+            }">
+              ${report.status === 'approved' ? '● Approved' :
+                report.status === 'pending' ? '◑ Pending' : '○ Rejected'}
+            </span>
+          </td>
+          <td>${getRelativeTime(report.submitted_at)}</td>
+          <td>
+            <div class="flex items-center gap-2" onclick="event.stopPropagation()">
+              <button onclick="viewReport(${report.id})" class="btn btn-xs btn-outline">View</button>
+              ${report.status === 'pending' ? `
+                <button onclick="quickReview(${report.id}, 'approved')" class="btn btn-xs btn-primary">✓</button>
+                <button onclick="quickReview(${report.id}, 'rejected')" class="btn btn-xs btn-destructive">✗</button>
+              ` : ''}
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Filter by status
+    function filterByStatus(status) {
+      currentFilter = status;
+
+      // Update filter cards
+      document.querySelectorAll('.filter-card').forEach(card => {
+        card.classList.remove('ring-2', 'ring-violet-400');
+      });
+      document.querySelector(`[data-filter="${status}"]`).classList.add('ring-2', 'ring-violet-400');
+
+      if (status === 'all') {
+        filteredReports = reports;
+      } else {
+        filteredReports = reports.filter(r => r.status === status);
+      }
+
+      displayReports();
+    }
+
+    // Handle search
+    function handleSearch(event) {
+      event.preventDefault();
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+      filteredReports = reports.filter(r => {
+        const matchSearch = r.employee_name?.toLowerCase().includes(searchTerm) ||
+          r.date?.includes(searchTerm) ||
+          r.title?.toLowerCase().includes(searchTerm);
+        const matchStatus = currentFilter === 'all' || r.status === currentFilter;
+        return matchSearch && matchStatus;
+      });
+
+      displayReports();
+    }
+
+    // View report
+    function viewReport(id) {
+      const report = reports.find(r => r.id === id);
+      if (!report) return;
+
+      currentReport = report;
+
+      const modalBody = document.getElementById('modalBody');
+      const modalFooter = document.getElementById('modalFooter');
+
+      modalBody.innerHTML = `
+        <div class="space-y-4">
+          <div class="flex justify-between items-start">
+            <div>
+              <h4 class="text-lg font-semibold">${report.employee_name}</h4>
+              <p class="text-sm text-slate-500">Report for ${report.date}</p>
+            </div>
+            <span class="status-badge ${
+              report.status === 'approved' ? 'status-badge-approved' :
+              report.status === 'pending' ? 'status-badge-pending' :
+              'status-badge-rejected'
+            }">
+              ${report.status === 'approved' ? '● Approved' :
+                report.status === 'pending' ? '◑ Pending' : '○ Rejected'}
+            </span>
+          </div>
+
+          <div>
+            <h5 class="font-medium text-slate-700 mb-2">Hours Worked</h5>
+            <p class="text-slate-600">${formatMinutes(report.hours_worked * 60)}</p>
+          </div>
+
+          <div>
+            <h5 class="font-medium text-slate-700 mb-2">Tasks Completed</h5>
+            ${report.tasks_completed && report.tasks_completed.length > 0 ?
+              '<ul class="list-disc list-inside text-slate-600">' +
+              report.tasks_completed.map(task => `<li>${task}</li>`).join('') +
+              '</ul>' :
+              '<p class="text-slate-400">No tasks completed</p>'
+            }
+          </div>
+
+          <div>
+            <h5 class="font-medium text-slate-700 mb-2">Tasks In Progress</h5>
+            ${report.tasks_in_progress && report.tasks_in_progress.length > 0 ?
+              '<ul class="list-disc list-inside text-slate-600">' +
+              report.tasks_in_progress.map(task => `<li>${task}</li>`).join('') +
+              '</ul>' :
+              '<p class="text-slate-400">No tasks in progress</p>'
+            }
+          </div>
+
+          ${report.blockers && report.blockers.length > 0 ? `
+            <div>
+              <h5 class="font-medium text-slate-700 mb-2">Blockers / Challenges</h5>
+              <ul class="list-disc list-inside text-slate-600">
+                ${report.blockers.map(blocker => `<li>${blocker}</li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
+
+          ${report.comments ? `
+            <div>
+              <h5 class="font-medium text-slate-700 mb-2">Additional Comments</h5>
+              <p class="text-slate-600">${report.comments}</p>
+            </div>
+          ` : ''}
+
+          ${report.manager_comment ? `
+            <div class="p-3 bg-muted rounded-lg">
+              <h5 class="font-medium text-slate-700 mb-1">Manager Feedback</h5>
+              <p class="text-slate-600">${report.manager_comment}</p>
+            </div>
+          ` : ''}
+
+          ${report.status === 'pending' ? `
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-2">Your Feedback</label>
+              <textarea id="managerComment" class="textarea" rows="3" placeholder="Add your feedback...">${report.manager_comment || ''}</textarea>
+            </div>
+          ` : ''}
+        </div>
+      `;
+
+      if (report.status === 'pending') {
+        modalFooter.innerHTML = `
+          <div class="flex gap-3">
+            <button onclick="reviewReport(${report.id}, 'approved')" class="btn btn-primary">Approve</button>
+            <button onclick="reviewReport(${report.id}, 'rejected')" class="btn btn-destructive">Reject</button>
+            <button onclick="closeModal()" class="btn btn-outline">Cancel</button>
+          </div>
+        `;
+      } else {
+        modalFooter.innerHTML = `
+          <button onclick="closeModal()" class="btn btn-outline">Close</button>
+        `;
+      }
+
+      document.getElementById('reportModal').classList.remove('hidden');
+    }
+
+    // Close modal
+    function closeModal() {
+      document.getElementById('reportModal').classList.add('hidden');
+      currentReport = null;
+    }
+
+    // Quick review
+    async function quickReview(id, status) {
+      try {
+        const data = await reviewReport(id, status, '');
+        if (data.id) {
+          reports = reports.map(r => r.id === id ? { ...r, status } : r);
+          showToast(`Report ${status}!`, 'success');
+          updateCounts();
+          filterByStatus(currentFilter);
+        }
+      } catch (error) {
+        showToast('Failed to update report', 'error');
+      }
+    }
+
+    // Review with comment
+    async function reviewReport(id, status) {
+      const comment = document.getElementById('managerComment')?.value || '';
+
+      try {
+        const data = await reviewReport(id, status, comment);
+        if (data.id) {
+          reports = reports.map(r => r.id === id ? data : r);
+          showToast(`Report ${status}!`, 'success');
+          closeModal();
+          updateCounts();
+          filterByStatus(currentFilter);
+        }
+      } catch (error) {
+        showToast('Failed to update report', 'error');
+      }
+    }
+
+    // Utility functions
+    function formatMinutes(mins) {
+      if (!mins) return '—';
+      const h = Math.floor(mins / 60);
+      const m = Math.round(mins % 60);
+      if (h === 0) return `${m}m`;
+      if (m === 0) return `${h}h`;
+      return `${h}h ${m}m`;
+    }
+
+    function truncate(str, len) {
+      return str.length > len ? str.substring(0, len) + '...' : str;
+    }
+
+    // Toast notification
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = `fixed bottom-4 right-4 flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl z-50 animate-fadeIn ${type === 'success' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`;
+      toast.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          ${type === 'success' ? '<polyline points="20 6 9 17 4 12"></polyline>' : '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>'}
+        </svg>
+        <span class="font-medium text-sm">${message}</span>
+        <button onclick="this.parentElement.remove()" class="p-1 hover:bg-white/20 rounded-lg transition-all">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      `;
+
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // Close modal on backdrop click
+    document.getElementById('reportModal').addEventListener('click', (e) => {
+      if (e.target.id === 'reportModal') {
+        closeModal();
+      }
+    });
+
+    // Initialize filter
+    filterByStatus('all');
+  </script>
+<script src="/static/js/bubble-background.js"></script>
+</body>
+</html>

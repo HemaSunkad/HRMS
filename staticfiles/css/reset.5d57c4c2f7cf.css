@@ -1,0 +1,133 @@
+/* ========================================
+   CSS RESET & NORMALIZATION
+   ======================================== */
+
+/* === BOX SIZING === */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* === MARGINS & PADDINGS === */
+* {
+  margin: 0;
+  padding: 0;
+}
+
+/* === TYPOGRAPHY === */
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  line-height: 1.6;
+  min-height: 100vh;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* === HEADINGS === */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 0;
+}
+
+/* === LISTS === */
+ul, ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* === LINKS === */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: none;
+}
+
+/* === IMAGES === */
+img, picture, video, canvas, svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* === FORMS === */
+input, button, textarea, select {
+  font: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+button {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* === TABLES === */
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+/* === ACCESSIBILITY === */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* === SCROLLBARS === */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--muted);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+  opacity: 0.8;
+}
+
+/* === SELECTION === */
+::selection {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+/* === REMOVE DEFAULT STYLES === */
+[hidden] {
+  display: none !important;
+}
+
+/* === MOBILE TAP HIGHLIGHT === */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* === FOCUS RINGS === */
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
